@@ -2,3 +2,4 @@ ref/*
 !ref/.gitkeep
 __pycache__/
 server/.chrome-profile/
+server/.feed-config.json

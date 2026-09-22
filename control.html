@@ -100,14 +100,30 @@
       <p class="muted">Click it again any time to refresh. The data goes straight from your united.com tab to this page in your browser; passenger names are never uploaded and are left out of shared snapshot links.
         <a href="status.html" target="_blank" rel="noopener">Open flight status page &rarr;</a></p>
       <div class="row"><span id="unitedMsg" class="msg"></span></div>
+      <h3>Local feed <small class="muted">optional, keeps the screen up to date on its own</small></h3>
+      <div class="seg">
+        <label><input type="radio" name="feedFollow" value="gate" data-path="feed.follow"> Follow a gate</label>
+        <label><input type="radio" name="feedFollow" value="calendar" data-path="feed.follow"> Follow my calendar's UA flights</label>
+      </div>
+      <div class="grid" data-feed="gate">
+        <label>Airport<input data-path="feed.airport" placeholder="EWR" maxlength="3"></label>
+        <label>Gate<input data-path="feed.gate" placeholder="C107"></label>
+      </div>
+      <div data-feed="calendar">
+        <div class="row"><input id="icsUrl" type="password" class="grow" autocomplete="off" placeholder="Calendar link: webcal://… (e.g. Flighty synced to iCloud)"></div>
+        <p class="muted">Shows the next UA flight in the calendar once it's within 5 hours; until then a random UA departure
+          from a United hub in the next 2 hours. The link is kept only in this browser and on your computer, never in shared links.</p>
+      </div>
       <div class="row">
-        <label class="inline"><input type="checkbox" data-path="feed.enabled"> Follow a gate with the local feed</label>
+        <button id="feedApply" class="primary">Send to the feed</button>
+        <label class="inline"><input type="checkbox" data-path="feed.enabled"> Show the feed on the display</label>
         <label>Feed address<input data-path="feed.url" placeholder="http://127.0.0.1:8788"></label>
         <label>Poll every (s)<input type="number" min="15" class="tiny" data-path="feed.sec"></label>
         <button id="feedBtn">Fetch now</button>
       </div>
-      <p class="muted">Optional: <code>python server/gate_feed.py --airport EWR --gate C107</code> keeps one gate up to date on
-        its own and rolls over to the next flight after departure. Without it, use the bookmark steps above.</p>
+      <p class="muted">Start the feed once on this computer: <code>pip install playwright tzdata</code>, then
+        <code>python server/gate_feed.py</code>. It follows a gate and rolls over to the next flight after departure, and
+        remembers what you send it. Without it, use the bookmark steps above.</p>
       <div class="row"><span id="feedMsg" class="msg"></span></div>
       <div id="fvPick" hidden>
         <div class="row">

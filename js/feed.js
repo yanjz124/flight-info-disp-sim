@@ -19,7 +19,7 @@ window.FIDS = window.FIDS || {};
 
   // Apply one feed reading. Returns a short status message.
   F.applyFeed = function (s, d) {
-    if (!d || (!d.united && !d.fv)) throw new Error(d && d.error ? d.error : 'The feed has no data yet.');
+    if (!d || (!d.united && !d.fv)) throw new Error(d && d.error ? d.error : 'The feed is getting its first update for ' + F.describeFeed(d && d.config) + ' (about a minute)...');
     let msg = '';
     if (d.flight && d.fv) {
       // The server picked which flight is at the gate; follow it even before United's data lands.
@@ -32,8 +32,29 @@ window.FIDS = window.FIDS || {};
     }
     s.feed = { ...s.feed, updated: d.fetchedAt || new Date().toISOString(), error: d.error || '' };
     return (s.flight.airline + s.flight.number) + ' at gate ' + (s.flight.gate || '?') +
-      ' from the local feed' + (d.error ? ' (' + d.error + ')' : '') + msg;
+      ' from the local feed' + (d.note ? ': ' + d.note : '') + (d.error ? ' (' + d.error + ')' : '') + msg;
   };
+
+  // The calendar link is private (names, booking codes), so like the API key it stays out of the shared state.
+  const ICS_KEY = 'fids.ics';
+  F.getIcs = function () { try { return localStorage.getItem(ICS_KEY) || ''; } catch (e) { return ''; } };
+  F.setIcs = function (v) { try { v ? localStorage.setItem(ICS_KEY, v) : localStorage.removeItem(ICS_KEY); } catch (e) {} };
+
+  // Tell the feed what to follow: { ics } or { airport, gate }. Returns the feed's new setup.
+  F.configureFeed = async function (s, cfg) {
+    let res;
+    try {
+      res = await fetch((s.feed.url || '').replace(/\/$/, '') + '/config', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg),
+      });
+    } catch (e) {
+      throw new Error('Feed not reachable at ' + s.feed.url + '. Start it with: python server/gate_feed.py');
+    }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || res.status + ' from the feed');
+    return d.config;
+  };
+  F.describeFeed = (c) => !c || !c.mode ? 'nothing yet' : c.mode === 'calendar' ? "your calendar's UA flights" : c.airport + ' gate ' + c.gate;
 
   F.refreshFeed = async function (s) {
     return F.applyFeed(s, await F.fetchFeed(s));

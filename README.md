@@ -63,12 +63,23 @@ Each cycle it starts your Chrome off-screen, reads the airport's departures from
 currently using the gate, then reads that flight's details from united.com, and serves the result on localhost.
 
 ```sh
-pip install playwright
-python server/gate_feed.py --airport EWR --gate C107        # --every 120 --airline UA --show
+pip install playwright tzdata
+python server/gate_feed.py        # --every 120 --show; or set it up here: --airport EWR --gate C107
 ```
 
-On the control page tick **Follow a gate with the local feed**. The display and status pages poll it, so a screen left
-running follows the gate on its own. Same caveats as the bookmark: personal use, breaks when either site changes.
+Then set it up under **Local feed** on the control page and click **Send to the feed**:
+
+- **Follow a gate:** airport code and gate.
+- **Follow my calendar's UA flights:** paste an iCal subscription link (for example Flighty synced to an iCloud
+  calendar). The feed shows the next UA flight in it once it's within 5 hours, with its gate and live data. Until then it
+  shows a random UA departure leaving one of United's hubs in the next 2 hours, and keeps it until it departs.
+
+The feed remembers the last setup in `server/.feed-config.json` (gitignored), so a restart keeps going. The calendar
+link is private: it's kept only in that file and this browser, never in shared links, and only flight numbers and
+routes reach the pages. Only this site and `localhost` pages can change the setup (`--allow-origin` adds another).
+
+**Send to the feed** also ticks **Show the feed on the display**. The display and status pages poll it, so a screen left
+running follows along on its own. Same caveats as the bookmark: personal use, breaks when either site changes.
 Passenger names never leave your machine.
 
 ## Wallpaper Engine

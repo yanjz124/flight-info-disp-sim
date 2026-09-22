@@ -113,6 +113,9 @@ window.FIDS = window.FIDS || {};
         enabled: false,
         url: 'http://127.0.0.1:8788',
         sec: 60,
+        follow: 'gate',          // what "Send to the feed" sets up: 'gate' (airport + gate) or 'calendar'
+        airport: '',
+        gate: '',
         updated: '',
         error: '',
       },

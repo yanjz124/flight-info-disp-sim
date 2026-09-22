@@ -5,8 +5,6 @@ window.FIDS = window.FIDS || {};
 
 (function (F) {
   const STORAGE_KEY = 'fids.state.v2';
-  const KEY_STORAGE = 'fids.apikey';
-  const FETCH_LOCK = 'fids.lastFetch';
 
   // United boarding order. Index 0 is pre-boarding.
   F.GROUPS = ['Pre-boarding', 'Group 1', 'Group 2', 'Group 3', 'Group 4', 'Group 5', 'Group 6'];
@@ -34,18 +32,6 @@ window.FIDS = window.FIDS || {};
     const sched = dep.toISOString().slice(0, 16);
     return {
       version: 2,
-      source: {
-        mode: 'flight',          // 'flight' | 'airport' | 'manual'
-        airline: 'UA',           // IATA code used to filter airport departures
-        flight: 'UA5220',
-        date: new Date(Date.now() + offset * 60000).toISOString().slice(0, 10),
-        airport: 'SFO',
-        gate: '',
-        dest: '',
-        autoRefresh: false,
-        refreshMin: 5,
-        lookupNext: false,       // extra API call per refresh to find the gate's next departure
-      },
       flight: {
         airline: 'UA',
         number: '5220',
@@ -189,25 +175,6 @@ window.FIDS = window.FIDS || {};
     window.addEventListener('storage', (e) => {
       if (e.key === STORAGE_KEY && e.newValue) cb(merge(F.defaultState(), JSON.parse(e.newValue)));
     });
-  };
-
-  F.getKey = function () {
-    const h = hashParams();
-    if (h.has('k')) return h.get('k');
-    try { return localStorage.getItem(KEY_STORAGE) || ''; } catch (e) { return ''; }
-  };
-  F.setKey = function (k) {
-    try { k ? localStorage.setItem(KEY_STORAGE, k) : localStorage.removeItem(KEY_STORAGE); } catch (e) {}
-  };
-
-  // Only one open page performs each scheduled fetch.
-  F.claimFetch = function (intervalMs) {
-    try {
-      const last = +localStorage.getItem(FETCH_LOCK) || 0;
-      if (Date.now() - last < intervalMs) return false;
-      localStorage.setItem(FETCH_LOCK, String(Date.now()));
-    } catch (e) {}
-    return true;
   };
 
   // ---- time helpers (flight times are airport-local wall clock + utcOffsetMin) ----

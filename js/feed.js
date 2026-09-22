@@ -35,7 +35,7 @@ window.FIDS = window.FIDS || {};
       ' from the local feed' + (d.note ? ': ' + d.note : '') + (d.error ? ' (' + d.error + ')' : '') + msg;
   };
 
-  // The calendar link is private (names, booking codes), so like the API key it stays out of the shared state.
+  // The calendar link is private (names, booking codes), so it stays out of the shared state and snapshots.
   const ICS_KEY = 'fids.ics';
   F.getIcs = function () { try { return localStorage.getItem(ICS_KEY) || ''; } catch (e) { return ''; } };
   F.setIcs = function (v) { try { v ? localStorage.setItem(ICS_KEY, v) : localStorage.removeItem(ICS_KEY); } catch (e) {} };

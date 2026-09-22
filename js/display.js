@@ -240,27 +240,6 @@
     renderFooter(s, c24);
   }
 
-  async function autoRefresh() {
-    const src = state.source;
-    if (!src.autoRefresh || src.mode === 'manual' || state.flight.lock) return;
-    const key = F.getKey();
-    if (!key) return;
-    const interval = Math.max(1, src.refreshMin) * 60000;
-    if (F.isSnapshot()) {
-      if (Date.now() - (autoRefresh.last || 0) < interval) return;
-      autoRefresh.last = Date.now();
-    } else if (!F.claimFetch(interval)) return;
-    try {
-      await F.refreshFlight(state, key);
-      F.save(state);
-      $('err').hidden = true;
-      render();
-    } catch (e) {
-      $('err').textContent = 'Refresh failed: ' + e.message;
-      $('err').hidden = false;
-    }
-  }
-
   // Keyboard: arrows step through boarding groups, F toggles fullscreen.
   document.addEventListener('keydown', (e) => {
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
@@ -301,6 +280,4 @@
   fit();
   render();
   setInterval(render, 1000);
-  setInterval(autoRefresh, 30000);
-  autoRefresh();
 })(window.FIDS);

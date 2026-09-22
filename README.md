@@ -22,17 +22,21 @@ python -m http.server 8000
 **GitHub Pages:** push the repo, then go to Settings → Pages → Deploy from branch → `main` / root.
 Then open `https://<user>.github.io/<repo>/control.html`.
 
-## Live data
+## Where the data comes from
 
-Flight data comes from [AeroDataBox](https://rapidapi.com/aedbx-aedbx/api/aerodatabox) on RapidAPI, called directly from the browser. Subscribe to the free tier and paste your RapidAPI key into the control page. The key is stored only in your browser's localStorage and is never committed.
+No API keys and no accounts: everything is read from pages you open yourself, or by the optional local feed.
 
-- **By flight number:** looks up a flight number and date. For multi-leg flights, set the origin airport.
-- **By airport / gate:** lists one airline's departures (default `UA`) from an airport for the next ~12 hours, optionally filtered by gate or destination, and shows the next one.
-- **Manual only:** no API calls; you type everything in.
+| What | Source |
+|---|---|
+| Which flight, its gate and times | FlightView's airport departures (via the bookmark, or the feed) |
+| Delay and reason, boarding time, terminal, aircraft, inbound flight, weather | united.com flight status (via the bookmark, or the feed) |
+| Amenities, cabin names, Wi-Fi provider | united.com flight status |
+| Upgrade and standby lists with capacity | united.com flight status |
+| Next departure from the gate | FlightView's airport departures |
+| Boarding groups and progress | set by hand, or advanced by the clock |
 
-Auto-refresh re-pulls the selected flight every N minutes. If both the control page and the display are open, only one of them makes each request. Tick **Freeze details** to stop a refresh from overwriting your manual edits. The quick-delay buttons tick it for you.
-
-The upgrade and standby lists and the boarding progress are not in any public API, so they are always entered by hand.
+Anything can still be typed in by hand in **Flight details** on the control page; tick **Freeze details** to stop an update
+from overwriting your edits.
 
 ## United live data (one-click bookmark)
 
@@ -46,13 +50,14 @@ counts. Click it again to refresh. Nothing to install, and it works from the Git
 
 The data only moves between your own browser tabs. Upgrade/standby names (surname + initial, as United shows them publicly)
 stay in your browser's storage, are never committed, and are left out of "Copy link for another device" snapshots.
-**Finding a flight without any API key:** open your airport's departures on FlightView and click the bookmark. The control
+**Finding a flight:** open your airport's departures on FlightView and click the bookmark. The control
 page then lists every departure (flight number, destination, gate, time) as a picker, with a filter box. Pick one and it
 becomes the current flight, with the united.com link built for it; click the bookmark there for everything else.
 
 **Next departure from the gate:** United's data doesn't include it, so the control page links to the airport's
 departures on [FlightView](https://www.flightview.com/). Click the same bookmark there: it reads FlightView's departures
-(with gates) and picks the next flight from your gate. AeroDataBox can also be used, but its free data often has no gates.
+(with gates) and picks the next flight from your gate, then **Use FlightView's departures** under Next departure re-picks it
+without another click.
 
 A tab opened by the bookmark hands its update to an already-open control page and closes itself.
 
@@ -102,7 +107,7 @@ inbound flight, weather, amenities, and the standby and upgrade lists. It uses t
 
 Pages on the **same browser** share state through localStorage, so edits on `control.html` show up on the display right away (for example, a laptop driving a TV over HDMI).
 
-For a **different device**, use **Copy link for another device**. It puts a snapshot of the current state in the URL. Later edits won't reach that device. You can optionally include the API key so the device keeps refreshing flight times on its own.
+For a **different device**, use **Copy link for another device**. It puts a snapshot of the current state in the URL. Later edits won't reach that device. The local feed keeps such a device up to date if it can reach this computer.
 
 ## Assets
 

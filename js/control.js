@@ -20,13 +20,9 @@
       else if (el.type === 'radio') el.checked = el.value === v;
       else if (document.activeElement !== el) el.value = v == null ? '' : v;
     });
-    document.querySelectorAll('[data-show]').forEach((el) => {
-      el.hidden = !el.dataset.show.split(' ').includes(state.source.mode);
-    });
     document.querySelectorAll('[data-feed]').forEach((el) => { el.hidden = el.dataset.feed !== state.feed.follow; });
     $('updated').textContent = state.flight.updated
       ? 'Last fetched ' + new Date(state.flight.updated).toLocaleTimeString() : '';
-    $('keyState').textContent = F.getKey() ? 'saved' : 'not set';
     renderBoarding();
     listEditors.forEach((ed) => ed.render());
     updateUnitedLink();
@@ -156,93 +152,22 @@
     new ListEditor($('standbyEd'), () => state.standby.list),
   ];
 
-  // ---- API key ----
-  $('apiKey').value = F.getKey();
-  $('saveKey').onclick = () => { F.setKey($('apiKey').value.trim()); fillForm(); msg('Key saved.'); };
-  $('clearKey').onclick = () => { F.setKey(''); $('apiKey').value = ''; fillForm(); };
+  function msg(t, err) { $('unitedMsg').textContent = t; $('unitedMsg').className = 'msg' + (err ? ' err' : ''); }
 
-  // ---- fetching ----
-  function msg(t, err) { $('fetchMsg').textContent = t; $('fetchMsg').className = 'msg' + (err ? ' err' : ''); }
-
-  function localStamp(offsetMin, addMin) {
-    return new Date(Date.now() + (offsetMin + addMin) * 60000).toISOString().slice(0, 16);
-  }
-
-  let lastList = [];
-  function showResults(list) {
-    lastList = list;
-    if (!list.length) { $('results').hidden = true; return; }
-    const c24 = state.display.clock24;
-    $('results').innerHTML = '<table><thead><tr><th>Flight</th><th>To</th><th>Departs</th><th>Gate</th><th>Status</th><th></th></tr></thead><tbody>' +
-      list.map((f, i) => '<tr><td>' + esc(f.airline + ' ' + f.number) + '</td><td>' + esc(f.destLabel) +
-        '</td><td>' + F.fmtTime(f.est || f.sched, c24) + (f.est ? ' <span class="muted">(sch ' + F.fmtTime(f.sched, c24) + ')</span>' : '') +
-        '</td><td>' + esc(f.gate) + '</td><td>' + esc(f.apiStatus) + '</td><td><button data-pick="' + i + '">Use</button></td></tr>').join('') +
-      '</tbody></table>';
-    $('results').hidden = false;
-  }
-  $('results').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-pick]');
-    if (b) pick(lastList[+b.dataset.pick], lastList);
-  });
-
-  function pick(f, list) {
-    F.applyFlight(state, f);
-    state.flight.lock = false;
-    state.source.flight = f.airline + f.number;
-    state.source.date = (f.sched || '').slice(0, 10) || state.source.date;
-    state.source.airport = f.originCode || state.source.airport;
-    if (list) F.applyNext(state, F.pickNext(state, list));
+  // Next departure from this gate, from the FlightView departures the bookmark (or the feed) brought in.
+  function lookupNextDeparture() {
+    const el = $('nextMsg'), d = fvData();
+    if (!d) {
+      el.textContent = 'Open your airport\'s departures on FlightView and click the bookmark to fill this in.';
+      el.className = 'msg';
+      return;
+    }
+    const r = F.applyFlightView(state, d);
+    el.textContent = r.msg;
+    el.className = 'msg' + (r.ok ? '' : ' err');
     commit(); fillForm();
-    msg('Showing ' + f.airline + ' ' + f.number + ' to ' + f.destLabel + '.');
-  }
-
-  $('fetchBtn').onclick = async () => {
-    const key = F.getKey(), src = state.source;
-    msg('Fetching...');
-    $('results').hidden = true;
-    try {
-      if (src.mode === 'flight') {
-        const legs = await F.api.byFlight(key, src.flight, src.date);
-        if (!legs.length) return msg('No flight found.', true);
-        const match = legs.find((l) => l.originCode === (src.airport || '').toUpperCase());
-        if (legs.length > 1 && !match) { showResults(legs); return msg('Multiple legs: pick one.'); }
-        pick(match || legs[0]);
-        lookupNextDeparture();
-      } else {
-        const ap = src.airport.toUpperCase();
-        const off = state.flight.originCode === ap ? state.flight.utcOffsetMin : -new Date().getTimezoneOffset();
-        const all = await F.api.byAirport(key, ap, localStamp(off, -30), localStamp(off, 690), { airline: src.airline });
-        let list = all;
-        if (src.gate) list = list.filter((n) => n.gate.toUpperCase() === src.gate.toUpperCase());
-        if (src.dest) list = list.filter((n) => n.destCode.toUpperCase() === src.dest.toUpperCase());
-        showResults(list);
-        const next = list.find((f) => !/departed|canceled|cancelled|enroute|arrived/i.test(f.apiStatus));
-        if (next) pick(next, all);
-        else msg(list.length ? 'No upcoming flights, pick one below.' : 'No matching ' + (src.airline || '') + ' departures in the next 12 hours.', !list.length);
-      }
-    } catch (e) {
-      msg(e.message, true);
-    }
-  };
-
-  // Next departure from this gate: United's site has no by-gate list, so this uses AeroDataBox (key needed).
-  async function lookupNextDeparture() {
-    const el = $('nextMsg');
-    el.textContent = 'Looking up the next departure from gate ' + (state.flight.gate || '?') + '...'; el.className = 'msg';
-    try {
-      el.textContent = await F.lookupNext(state, F.getKey());
-      commit(); fillForm();
-    } catch (e) {
-      el.textContent = 'Next departure lookup failed: ' + e.message; el.className = 'msg err';
-    }
   }
   $('nextBtn').onclick = lookupNextDeparture;
-
-  function updateFlightViewLink() {
-    const ap = (state.flight.originCode || '').toUpperCase(), a = $('fvLink');
-    a.href = ap.length === 3 ? 'https://www.flightview.com/airport/' + ap + '/departures' : 'https://www.flightview.com/';
-    a.textContent = ap.length === 3 ? ap + ' departures on FlightView' : 'departures on FlightView';
-  }
 
   // ---- optional local feed (server/gate_feed.py) ----
   function feedMsg(t, err) { $('feedMsg').textContent = t; $('feedMsg').className = 'msg' + (err ? ' err' : ''); }
@@ -265,7 +190,14 @@
   };
   F.startFeedPolling(() => state, (m) => { feedMsg(m); commit(); fillForm(); renderPicker(); }, (m) => feedMsg(m, true));
 
-  // ---- FlightView departure picker (no API key needed: comes from the bookmark on FlightView) ----
+  // Link to this airport's departures on FlightView, where the bookmark reads the gate list.
+  function updateFlightViewLink() {
+    const ap = (state.flight.originCode || '').toUpperCase(), a = $('fvLink');
+    a.href = ap.length === 3 ? 'https://www.flightview.com/airport/' + ap + '/departures' : 'https://www.flightview.com/';
+    a.textContent = ap.length === 3 ? ap + ' departures on FlightView' : 'departures on FlightView';
+  }
+
+  // ---- FlightView departure picker (comes from the bookmark on FlightView, or from the local feed) ----
   function fvData() {
     if (F.lastFlightView) return F.lastFlightView;
     try { return JSON.parse(sessionStorage.getItem('fids.fv') || 'null'); } catch (e) { return null; }
@@ -358,28 +290,18 @@
   runImports(true);
   renderPicker();
 
-  // Auto-refresh from the control page too (a shared lock stops the display double-fetching).
-  setInterval(async () => {
-    const src = state.source;
-    if (!src.autoRefresh || src.mode === 'manual' || state.flight.lock || !F.getKey()) return;
-    if (!F.claimFetch(Math.max(1, src.refreshMin) * 60000)) return;
-    try { await F.refreshFlight(state, F.getKey()); commit(); fillForm(); msg('Auto-refreshed ' + new Date().toLocaleTimeString() + '.'); }
-    catch (e) { msg('Auto-refresh failed: ' + e.message, true); }
-  }, 30000);
-
   // ---- top bar ----
   $('openDisplay').onclick = () => window.open('index.html', 'fids-display');
   $('copyLink').onclick = async () => {
-    const withKey = F.getKey() && confirm('Include your API key in the link so that device can auto-refresh?\n\nOnly do this for devices you trust.');
     const url = new URL('index.html', location.href);
     const snap = JSON.parse(JSON.stringify(state));
     snap.upgrades.list = []; snap.standby.list = [];
-    url.hash = 's=' + encodeURIComponent(F.encodeState(snap)) + (withKey ? '&k=' + encodeURIComponent(F.getKey()) : '');
+    url.hash = 's=' + encodeURIComponent(F.encodeState(snap));
     try { await navigator.clipboard.writeText(url.href); alert('Link copied. It is a snapshot without passenger names: later edits here will not reach that device.'); }
     catch (e) { prompt('Copy this link:', url.href); }
   };
   $('reset').onclick = () => {
-    if (!confirm('Reset everything to the demo flight? (Your API key is kept.)')) return;
+    if (!confirm('Reset everything to the demo flight?')) return;
     state = F.defaultState(); commit(); fillForm(); $('results').hidden = true; msg('');
   };
 

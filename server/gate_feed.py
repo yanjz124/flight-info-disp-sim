@@ -7,12 +7,18 @@ flight's details from united.com's flight-status page: times and delay, boarding
 cabins, and the upgrade/standby lists. It serves the result at http://127.0.0.1:8788/state for the
 display and control pages to poll.
 
-Run:   pip install playwright
+With --ics it follows the UA flights in an iCal subscription instead of a gate: the next one once it is
+within 5 hours, otherwise a random UA departure leaving one of United's hubs in the next 2 hours.
+
+Run:   pip install playwright tzdata airportsdata
+       python server/gate_feed.py        (then pick a gate or your calendar on the control page)
        python server/gate_feed.py --airport EWR --gate C107
+       python server/gate_feed.py --ics "webcal://p00-caldav.icloud.com/published/2/..."
        python server/gate_feed.py --airport SFO --gate F5 --airline UA --every 120 --show
 
-Then on the control page, tick "Follow a gate with the local feed" and leave the address as
-http://127.0.0.1:8788. Nothing is uploaded anywhere: the pages fetch it from your own machine.
+The last setup is saved in server/.feed-config.json, so a restart keeps following the same thing.
+On the control page, "Send to the feed" sets it up and turns on "Show the feed on the display"; leave the
+address as http://127.0.0.1:8788. Nothing is uploaded anywhere: the pages fetch it from your own machine.
 
 Personal, low-frequency use only. Automated access is against united.com's terms, and this breaks
 whenever either site changes. Passenger names stay on your machine.
@@ -20,13 +26,16 @@ whenever either site changes. Passenger names stay on your machine.
 import argparse
 import json
 import pathlib
+import random
 import re
 import subprocess
 import tempfile
 import threading
 import time
-from datetime import datetime, timedelta
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
@@ -36,9 +45,22 @@ FV_PAGE = "https://www.flightview.com/airport/{airport}/departures"
 FV_API = "https://app-api.flightview.com/api/airport/{airport}/departures"
 UA_PAGE = "https://www.united.com/en/us/flightstatus/details/{num}/{date}/{frm}/{to}/{carrier}"
 GONE = re.compile(r"depart|in air|en route|arriv|landed|cancel", re.I)
+# Calendar mode: a random departure comes from one of United's hubs, so there is always one to pick.
+UA_HUBS = {"SFO": "America/Los_Angeles", "LAX": "America/Los_Angeles", "DEN": "America/Denver",
+           "ORD": "America/Chicago", "IAH": "America/Chicago", "EWR": "America/New_York", "IAD": "America/New_York"}
+# Flighty's event titles: "Name: ✈ EWR→ILM • UA 3454" (zero-width spaces around the arrow).
+UA_TITLE = re.compile(r"\b([A-Z]{3})\W+([A-Z]{3})\s*•\s*UA\s*(\d+)")
+CAL_NEAR = timedelta(hours=5)        # show the calendar flight once it's this close, else a random one
+RANDOM_WINDOW = timedelta(hours=2)   # a random departure leaves within this long
+# What to follow can be set from the control page; it's kept here (gitignored: the calendar link is private).
+CONFIG_FILE = pathlib.Path(__file__).with_name(".feed-config.json")
+LOCAL_ORIGIN = re.compile(r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$")
+SITE_ORIGINS = ["https://yanjz124.github.io"]   # pages allowed to change the setup, besides localhost
 
-state = {"fetchedAt": None, "flight": None, "fv": None, "united": None, "error": None, "log": []}
+# mode: "gate" (--airport/--gate), "calendar" (the next UA flight in --ics) or "random" (calendar flight > 5 h away)
+state = {"fetchedAt": None, "flight": None, "fv": None, "united": None, "error": None, "log": [], "mode": "gate", "note": ""}
 lock = threading.Lock()
+wake = threading.Event()        # set when the setup changes, so the next cycle starts right away
 
 
 def note(msg):
@@ -118,9 +140,28 @@ def fetch_departures(page, airport):
     )
 
 
-def pick_flight(deps, gate, airline, grace):
+_airports = None
+
+
+def airport_tz(code):
+    """The airport's time zone. FlightView's times are airport-local with no zone, so "now" has to be the
+    airport's clock, not this computer's. Falls back to this computer's zone if airportsdata is missing."""
+    global _airports
+    if _airports is None:
+        try:
+            import airportsdata
+            _airports = airportsdata.load("IATA")
+        except ImportError:
+            _airports = {}
+            note("airportsdata isn't installed, so airport times are compared with this computer's clock "
+                 "(wrong if the airport is in another time zone): pip install airportsdata")
+    tz = (_airports.get((code or "").upper()) or {}).get("tz")
+    return ZoneInfo(tz) if tz else datetime.now().astimezone().tzinfo
+
+
+def pick_flight(deps, gate, airline, grace, tz):
     """The flight now using the gate: the earliest one that hasn't gone yet (plus a grace period)."""
-    cutoff = (datetime.now() - timedelta(minutes=grace)).strftime("%Y-%m-%dT%H:%M")
+    cutoff = (datetime.now(tz) - timedelta(minutes=grace)).strftime("%Y-%m-%dT%H:%M")
     at_gate = [d for d in deps if same_gate(d["gate"], gate) and (not airline or d["al"] == airline)]
     for d in sorted(at_gate, key=lambda d: d["date"] + "T" + (d["upd"] or d["sch"])):
         t = d["date"] + "T" + (d["upd"] or d["sch"])
@@ -160,7 +201,7 @@ def cycle(args):
     with Chrome(args) as page:
         deps = fetch_departures(page, args.airport)
         note(f"FlightView: {len(deps)} departures from {args.airport}")
-        dep = pick_flight(deps, args.gate, args.airline, args.grace)
+        dep = pick_flight(deps, args.gate, args.airline, args.grace, airport_tz(args.airport))
         if not dep:
             with lock:
                 state.update(fetchedAt=datetime.now().isoformat(timespec="seconds"),
@@ -179,22 +220,160 @@ def cycle(args):
                          fv={"airport": args.airport, "departures": deps}, united=united, error=None)
 
 
+# ---- calendar mode: follow the UA flights in an iCal subscription (e.g. Flighty synced to iCloud) ----
+
+_cal = {"at": 0.0, "flights": []}
+
+
+def calendar_flights(url):
+    """UA flights in the calendar as [{no, frm, to, dep (aware datetime), tz}], re-read at most every 10 min."""
+    if time.time() - _cal["at"] < 600:
+        return _cal["flights"]
+    req = urllib.request.Request(re.sub(r"^webcal://", "https://", url), headers={"User-Agent": "gate-feed"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        text = r.read().decode("utf-8", "replace")
+    text = re.sub(r"\r?\n[ \t]", "", text)                 # unfold long lines
+    flights, ev = [], None
+    for line in text.splitlines():
+        if line == "BEGIN:VEVENT":
+            ev = {}
+        elif line == "END:VEVENT" and ev is not None:
+            m = UA_TITLE.search(ev.get("SUMMARY", ("", {}))[0])
+            start, params = ev.get("DTSTART", ("", {}))
+            if m and start and ev.get("STATUS", ("", {}))[0] != "CANCELLED":
+                tz = ZoneInfo(params["TZID"]) if "TZID" in params else timezone.utc
+                dep = datetime.strptime(start.rstrip("Z")[:15], "%Y%m%dT%H%M%S").replace(tzinfo=tz)
+                flights.append({"no": m.group(3), "frm": m.group(1), "to": m.group(2), "dep": dep, "tz": tz})
+            ev = None
+        elif ev is not None and ":" in line:
+            key, value = line.split(":", 1)
+            name, *ps = key.split(";")
+            ev[name] = (value, dict(p.split("=", 1) for p in ps if "=" in p))
+    flights.sort(key=lambda f: f["dep"])
+    _cal.update(at=time.time(), flights=flights)
+    return flights
+
+
+def local_now(tz):
+    return datetime.now(timezone.utc).astimezone(tz)
+
+
+def find_dep(deps, al, no, date):
+    return next((d for d in deps if d["al"] == al and str(d["no"]) == str(no) and d["date"] == date), None)
+
+
+def dep_time(d, tz):
+    """A FlightView departure's (updated) time as an aware datetime in the airport's zone."""
+    return datetime.strptime(d["date"] + "T" + (d["upd"] or d["sch"])[:5], "%Y-%m-%dT%H:%M").replace(tzinfo=tz)
+
+
+def pick_random(page, args):
+    """A random UA departure leaving a hub within RANDOM_WINDOW."""
+    for airport in random.sample(list(UA_HUBS), len(UA_HUBS)):
+        tz = ZoneInfo(UA_HUBS[airport])
+        now = local_now(tz)
+        deps = fetch_departures(page, airport)
+        ok = [d for d in deps if d["al"] == "UA" and not GONE.search(d["st"] or "")
+              and now <= dep_time(d, tz) <= now + RANDOM_WINDOW]
+        if ok:
+            return {**random.choice(ok), "from": airport}, deps, tz
+        note(f"No UA departures from {airport} in the next {RANDOM_WINDOW}; trying another hub")
+    return None, None, None
+
+
+def cycle_calendar(args):
+    grace = timedelta(minutes=args.grace)
+    now = datetime.now(timezone.utc)
+    upcoming = [f for f in calendar_flights(args.ics) if f["dep"] + grace >= now]
+    nxt = upcoming[0] if upcoming else None
+    with Chrome(args) as page:
+        if nxt and nxt["dep"] - now <= CAL_NEAR:
+            # The calendar flight: FlightView adds the gate and any delay; otherwise go by the calendar alone.
+            date = nxt["dep"].strftime("%Y-%m-%d")
+            deps = fetch_departures(page, nxt["frm"])
+            dep = find_dep(deps, "UA", nxt["no"], date) or {
+                "al": "UA", "no": nxt["no"], "date": date, "sch": nxt["dep"].strftime("%H:%M"), "upd": "",
+                "gate": "", "to": nxt["to"], "toName": "", "st": ""}
+            dep = {**dep, "from": nxt["frm"]}
+            mode, fv_airport = "calendar", nxt["frm"]
+            state["pick"] = None
+            msg = f"UA{nxt['no']} {nxt['frm']}-{nxt['to']} from your calendar"
+        else:
+            # Keep the same random flight until it leaves, so the screen doesn't jump every cycle.
+            prev = state.get("pick")
+            if prev and prev["mode"] == "random" and dep_time(prev["dep"], ZoneInfo(prev["tz"])) + grace >= now:
+                dep, fv_airport = prev["dep"], prev["dep"]["from"]
+                deps = (state.get("fv") or {}).get("departures") or []
+            else:
+                dep, deps, tz = pick_random(page, args)
+                if not dep:
+                    raise RuntimeError("No UA departures at any hub in the next two hours.")
+                fv_airport = dep["from"]
+                state["pick"] = {"mode": "random", "dep": dep, "tz": tz.key}
+            mode = "random"
+            away = f"{(nxt['dep'] - now) / timedelta(hours=1):.0f} h away" if nxt else "none upcoming"
+            msg = f"random UA{dep['no']} {dep['from']}-{dep['to']} (next calendar flight {away})"
+        note(f"{mode}: {dep['al']}{dep['no']} {dep['from']}-{dep['to']} at {dep['upd'] or dep['sch']} gate {dep['gate'] or '?'}")
+        united = fetch_united(page, dep)
+        with lock:
+            state.update(fetchedAt=datetime.now().isoformat(timespec="seconds"), flight=dep, mode=mode, note=msg,
+                         fv={"airport": fv_airport, "departures": deps} if deps else None, united=united, error=None)
+
+
+def describe(args):
+    return "your calendar's UA flights" if args.ics else f"{args.airport} gate {args.gate}"   # never the calendar link
+
+
+def config_summary(args):
+    mode = "calendar" if args.ics else "gate" if args.airport and args.gate else None
+    return {"mode": mode, "airport": args.airport or "", "gate": args.gate or "", "airline": args.airline}
+
+
+def apply_config(args, cfg, save=True, allow_file=False):
+    """Switch what the feed follows: a gate, or the flights in a calendar. Raises ValueError on bad input."""
+    ics = (cfg.get("ics") or "").strip()
+    airport = (cfg.get("airport") or "").strip().upper()
+    gate = (cfg.get("gate") or "").strip().upper()
+    if ics:
+        if not re.match(r"^(webcal|https%s)://" % ("|file" if allow_file else ""), ics, re.I):
+            raise ValueError("The calendar link must start with webcal:// or https://")
+        airport = gate = ""
+    elif not (re.fullmatch(r"[A-Z]{3}", airport) and gate):
+        raise ValueError("Give a 3-letter airport code and a gate, or a calendar link.")
+    with lock:
+        args.ics, args.airport, args.gate = ics or None, airport or None, gate or None
+        if cfg.get("airline") is not None:
+            args.airline = str(cfg["airline"]).strip().upper()
+        state.update(flight=None, fv=None, united=None, pick=None, error=None, note="", mode="calendar" if ics else "gate")
+        _cal["at"] = 0
+    if save:
+        CONFIG_FILE.write_text(json.dumps({"ics": ics, "airport": airport, "gate": gate, "airline": args.airline}))
+    wake.set()
+
+
 def loop(args):
     while True:
+        wake.clear()
         started = time.time()
+        if not (args.ics or (args.airport and args.gate)):
+            with lock:
+                state["error"] = "Not set up yet: choose a gate or your calendar on the control page."
+            wake.wait()
+            continue
         try:
-            cycle(args)
+            cycle_calendar(args) if args.ics else cycle(args)
         except Exception as e:
             with lock:
                 state["error"] = str(e)
             note("Cycle failed: " + str(e)[:200])
-        time.sleep(max(30, args.every - (time.time() - started)))
+        wake.wait(max(30, args.every - (time.time() - started)))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--airport", required=True, help="origin airport, e.g. EWR")
-    ap.add_argument("--gate", required=True, help="gate to follow, e.g. C107")
+    ap.add_argument("--airport", help="origin airport, e.g. EWR")
+    ap.add_argument("--gate", help="gate to follow, e.g. C107")
+    ap.add_argument("--ics", help="instead of a gate, follow the UA flights in this iCal subscription (webcal:// or https://)")
     ap.add_argument("--airline", default="UA", help="airline code to follow at that gate ('' for any)")
     ap.add_argument("--every", type=int, default=120, help="seconds between refreshes (min 30)")
     ap.add_argument("--grace", type=int, default=10, help="keep showing a flight this many minutes past departure")
@@ -202,26 +381,60 @@ def main():
     ap.add_argument("--cdp-port", type=int, default=9333)
     ap.add_argument("--chrome", default=CHROME)
     ap.add_argument("--show", action="store_true", help="show the Chrome window")
+    ap.add_argument("--allow-origin", action="append", default=list(SITE_ORIGINS),
+                    help="another site allowed to change the setup from its control page (localhost always is)")
     args = ap.parse_args()
+
+    # Setup: the command line wins (and is remembered); otherwise the last one sent from the control page.
+    try:
+        if args.ics or (args.airport and args.gate):
+            apply_config(args, {"ics": args.ics, "airport": args.airport, "gate": args.gate}, allow_file=True)
+        elif CONFIG_FILE.exists():
+            apply_config(args, json.loads(CONFIG_FILE.read_text()), save=False, allow_file=True)
+    except ValueError as e:
+        ap.error(str(e))
 
     class Handler(BaseHTTPRequestHandler):
         def cors(self):
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
             self.send_header("Access-Control-Allow-Private-Network", "true")   # lets an https page reach localhost
 
-        def do_OPTIONS(self):
-            self.send_response(204); self.cors(); self.end_headers()
-
-        def do_GET(self):
-            with lock:
-                body = json.dumps(state).encode()
-            self.send_response(200 if self.path.startswith("/state") else 404)
+        def reply(self, code, obj):
+            body = json.dumps(obj).encode()
+            self.send_response(code)
             self.cors()
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def do_OPTIONS(self):
+            self.send_response(204); self.cors(); self.end_headers()
+
+        def do_GET(self):
+            if not self.path.startswith("/state"):
+                return self.reply(404, {"error": "not found"})
+            with lock:
+                body = {**state, "config": config_summary(args)}
+            self.reply(200, body)
+
+        # POST /config {"ics": "webcal://..."} or {"airport": "EWR", "gate": "C107"}, from the control page.
+        def do_POST(self):
+            origin = self.headers.get("Origin", "")
+            if not (LOCAL_ORIGIN.match(origin) or origin in args.allow_origin):
+                return self.reply(403, {"error": "Only the gate display site or localhost can change the feed."})
+            if not self.path.startswith("/config"):
+                return self.reply(404, {"error": "not found"})
+            try:
+                cfg = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+                apply_config(args, cfg if isinstance(cfg, dict) else {})
+            except (ValueError, json.JSONDecodeError) as e:
+                return self.reply(400, {"error": str(e)})
+            note("Now following " + describe(args))
+            self.reply(200, {"ok": True, "config": config_summary(args)})
 
         def log_message(self, *a):
             pass
@@ -234,7 +447,8 @@ def main():
     except OSError:
         raise SystemExit(f"Port {args.port} is already in use. Is another gate_feed.py running?")
     threading.Thread(target=loop, args=(args,), daemon=True).start()
-    print(f"Gate feed for {args.airport} {args.gate} on http://127.0.0.1:{args.port}/state  (Ctrl+C to stop)")
+    what = describe(args) if config_summary(args)["mode"] else "nothing yet (set it up on the control page)"
+    print(f"Gate feed for {what} on http://127.0.0.1:{args.port}/state  (Ctrl+C to stop)")
     srv.serve_forever()
 
 

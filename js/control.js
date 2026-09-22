@@ -23,6 +23,7 @@
     document.querySelectorAll('[data-show]').forEach((el) => {
       el.hidden = !el.dataset.show.split(' ').includes(state.source.mode);
     });
+    document.querySelectorAll('[data-feed]').forEach((el) => { el.hidden = el.dataset.feed !== state.feed.follow; });
     $('updated').textContent = state.flight.updated
       ? 'Last fetched ' + new Date(state.flight.updated).toLocaleTimeString() : '';
     $('keyState').textContent = F.getKey() ? 'saved' : 'not set';
@@ -251,6 +252,17 @@
     catch (e) { feedMsg(e.message, true); }
   }
   $('feedBtn').onclick = feedOnce;
+  $('icsUrl').value = F.getIcs();
+  $('feedApply').onclick = async () => {
+    const f = state.feed, cal = f.follow === 'calendar';
+    if (cal) F.setIcs($('icsUrl').value.trim());
+    feedMsg('Sending to the feed...');
+    try {
+      const c = await F.configureFeed(state, cal ? { ics: F.getIcs() } : { airport: f.airport, gate: f.gate });
+      if (!f.enabled) { f.enabled = true; commit(); fillForm(); }
+      feedMsg('The feed now follows ' + F.describeFeed(c) + '. The first update takes about a minute.');
+    } catch (e) { feedMsg(e.message, true); }
+  };
   F.startFeedPolling(() => state, (m) => { feedMsg(m); commit(); fillForm(); renderPicker(); }, (m) => feedMsg(m, true));
 
   // ---- FlightView departure picker (no API key needed: comes from the bookmark on FlightView) ----

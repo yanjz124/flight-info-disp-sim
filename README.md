@@ -63,7 +63,7 @@ Each cycle it starts your Chrome off-screen, reads the airport's departures from
 currently using the gate, then reads that flight's details from united.com, and serves the result on localhost.
 
 ```sh
-pip install playwright tzdata
+pip install playwright tzdata airportsdata
 python server/gate_feed.py        # --every 120 --show; or set it up here: --airport EWR --gate C107
 ```
 

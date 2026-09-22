@@ -10,16 +10,15 @@ display and control pages to poll.
 With --ics it follows the UA flights in an iCal subscription instead of a gate: the next one once it is
 within 5 hours, otherwise a random UA departure leaving one of United's hubs in the next 2 hours.
 
-Run:   pip install playwright tzdata
+Run:   pip install playwright tzdata airportsdata
        python server/gate_feed.py        (then pick a gate or your calendar on the control page)
        python server/gate_feed.py --airport EWR --gate C107
        python server/gate_feed.py --ics "webcal://p00-caldav.icloud.com/published/2/..."
-
-The last setup is saved in server/.feed-config.json, so a restart keeps following the same thing.
        python server/gate_feed.py --airport SFO --gate F5 --airline UA --every 120 --show
 
-Then on the control page, tick "Follow a gate with the local feed" and leave the address as
-http://127.0.0.1:8788. Nothing is uploaded anywhere: the pages fetch it from your own machine.
+The last setup is saved in server/.feed-config.json, so a restart keeps following the same thing.
+On the control page, "Send to the feed" sets it up and turns on "Show the feed on the display"; leave the
+address as http://127.0.0.1:8788. Nothing is uploaded anywhere: the pages fetch it from your own machine.
 
 Personal, low-frequency use only. Automated access is against united.com's terms, and this breaks
 whenever either site changes. Passenger names stay on your machine.
@@ -141,9 +140,28 @@ def fetch_departures(page, airport):
     )
 
 
-def pick_flight(deps, gate, airline, grace):
+_airports = None
+
+
+def airport_tz(code):
+    """The airport's time zone. FlightView's times are airport-local with no zone, so "now" has to be the
+    airport's clock, not this computer's. Falls back to this computer's zone if airportsdata is missing."""
+    global _airports
+    if _airports is None:
+        try:
+            import airportsdata
+            _airports = airportsdata.load("IATA")
+        except ImportError:
+            _airports = {}
+            note("airportsdata isn't installed, so airport times are compared with this computer's clock "
+                 "(wrong if the airport is in another time zone): pip install airportsdata")
+    tz = (_airports.get((code or "").upper()) or {}).get("tz")
+    return ZoneInfo(tz) if tz else datetime.now().astimezone().tzinfo
+
+
+def pick_flight(deps, gate, airline, grace, tz):
     """The flight now using the gate: the earliest one that hasn't gone yet (plus a grace period)."""
-    cutoff = (datetime.now() - timedelta(minutes=grace)).strftime("%Y-%m-%dT%H:%M")
+    cutoff = (datetime.now(tz) - timedelta(minutes=grace)).strftime("%Y-%m-%dT%H:%M")
     at_gate = [d for d in deps if same_gate(d["gate"], gate) and (not airline or d["al"] == airline)]
     for d in sorted(at_gate, key=lambda d: d["date"] + "T" + (d["upd"] or d["sch"])):
         t = d["date"] + "T" + (d["upd"] or d["sch"])
@@ -183,7 +201,7 @@ def cycle(args):
     with Chrome(args) as page:
         deps = fetch_departures(page, args.airport)
         note(f"FlightView: {len(deps)} departures from {args.airport}")
-        dep = pick_flight(deps, args.gate, args.airline, args.grace)
+        dep = pick_flight(deps, args.gate, args.airline, args.grace, airport_tz(args.airport))
         if not dep:
             with lock:
                 state.update(fetchedAt=datetime.now().isoformat(timespec="seconds"),

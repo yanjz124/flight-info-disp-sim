@@ -240,7 +240,11 @@ window.FIDS = window.FIDS || {};
         wifi: /yes/i.test(val('Wifi')) ? (/wi-?fi[^.]*free/i.test(ent) && !/purchase/i.test(ent) ? '(Free)' : '($)') : '',
         power: rows ? 'Rows ' + rows[1] + '-' + rows[2] : /every|all/i.test(power) ? 'All rows' : power ? 'Available' : '',
         entertainment: /yes/i.test(val('AVOD')) || /yes/i.test(val('Streaming')) || /entertainment is offered/i.test(ent),
-        food: econMeal ? (/purchase/i.test(econMeal.Description + ' ' + [].concat(econMeal.Value || []).join(' ')) ? '($)' : '(Free)') : '',
+        food: (() => {
+          const txt = econMeal ? econMeal.Description + ' ' + [].concat(econMeal.Value || []).join(' ') : '';
+          if (!txt || /not offered|no meal/i.test(txt)) return '';     // "Meals are not offered for this flight"
+          return /purchase/i.test(txt) ? '($)' : '(Free)';
+        })(),
         beverages: list.some((a) => a.Name === 'Beverages'),
       };
       cabinNames = list.filter((a) => a.Name === 'Seating' && a.Cabin).map((a) => a.Cabin);
@@ -270,6 +274,13 @@ window.FIDS = window.FIDS || {};
           : lca.some((c) => offered(val(c, 'InseatPower'))) ? (lca[0].CabinHeader || 'Front cabin') : '';
         a.entertainment = lca.some((c) => /entertainment/i.test(val(c, 'Entertainment')));
         a.beverages = true;
+      }
+      // Seatback / personal-device entertainment is listed per cabin even when AVOD and Streaming say "No".
+      a.entertainment = a.entertainment || lca.some((c) => offered(val(c, 'Entertainment')));
+      // United's overall text sometimes says "all rows" while the cabins say economy has none: trust the cabins.
+      if (!offered(val(econ, 'InseatPower'))) {
+        const withPower = lca.find((c) => offered(val(c, 'InseatPower')));
+        a.power = !withPower ? '' : /^rows/i.test(a.power) ? a.power : withPower.CabinHeader.replace(/[®℠]/g, '');
       }
       const wifi = lca.map((c) => val(c, 'WiFi')).filter(offered);
       a.wifi = wifi.length ? (wifi.some((w) => /free/i.test(w)) ? '(Free)' : '($)') : '';

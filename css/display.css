@@ -197,3 +197,4 @@ html, body {
   background: rgba(160, 20, 30, .9); color: #fff; font: 13px/1.4 system-ui, sans-serif;
   padding: 6px 10px; border-radius: 4px;
 }
+.am-logo { display: block; height: 26px; margin-top: 6px; filter: brightness(0); opacity: .8; }   /* United ships it white */

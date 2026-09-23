@@ -119,7 +119,7 @@ html, body {
 .th span:nth-child(n+2), .tr span:nth-child(n+2) { text-align: center; }
 .tr { height: 48px; font-size: 28px; border-bottom: 2px solid #c8c8c4; }
 .tr .nm { display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; }
-.badge { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; background: var(--ink); color: #fff; font-size: 22px; font-weight: 700; flex: none; }
+.badge { display: inline-flex; width: 38px; height: 38px; align-items: center; justify-content: center; background: var(--ink); color: #fff; font-size: 24px; font-weight: 700; flex: none; }
 .tr .ic { width: 30px; height: 30px; }
 .tr.cl { background: var(--cleared); color: #fff; border-bottom-color: var(--panel); padding-left: 10px; font-weight: 600; }
 .legend { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; font-size: 24px; }

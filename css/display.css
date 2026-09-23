@@ -76,12 +76,14 @@ html, body {
 /* ---------- body ---------- */
 .body { display: grid; grid-template-columns: 838px 1fr; min-height: 0; }
 .left { display: grid; grid-template-rows: 70px 1fr; min-height: 0; }
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px 4px 0 0; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px 4px 0 0; }
+/* The three tabs butt up against each other: only the ends of the strip are rounded, so no seam shows. */
 .tab {
   display: flex; align-items: center; justify-content: center;
   background: var(--tab-off); color: #fff; font-size: 38px; font-weight: 500;
-  border-radius: 4px 4px 0 0;
 }
+.tab:first-child { border-radius: 4px 0 0 0; }
+.tab:last-child { border-radius: 0 4px 0 0; }
 .tab.on { background: var(--panel); color: var(--ink); }
 .panel { position: relative; background: var(--panel); color: var(--ink); padding: 22px 36px 20px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 /* Tab change: a white veil fades in over the panel, the content swaps underneath, then it fades out. */

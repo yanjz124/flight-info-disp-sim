@@ -34,7 +34,7 @@ window.FIDS = window.FIDS || {};
     if (d.united) F.applyUnited(s, d.united);
     if (d.fv) {
       const r = F.applyFlightView(s, d.fv);
-      msg = (r && r.ok ? ' · ' + r.msg : '');
+      msg = r ? ' · ' + r.msg : '';      // the next departure, or why the footer has none to show
     }
     s.feed = { ...s.feed, updated: d.fetchedAt || new Date().toISOString(), error: d.error || '' };
     // The feed found nothing to follow. Whatever is on screen is the flight from before, so say that rather

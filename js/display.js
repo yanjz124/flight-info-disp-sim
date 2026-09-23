@@ -73,16 +73,19 @@
       (sub ? '<small>(' + esc(sub) + ')</small>' : '') + (html || '') + '</div></div>';
   }
 
+  // Only a price gets a marker: free is the plain name, the way the real screens read it.
+  const price = (v) => (v === '($)' ? ' ($)' : '');
+
   function flightPanel(s, c24) {
     const a = s.amenities, f = s.flight;
     const col1 = [], col2 = [];
     if (a.wifi) {
       const logo = a.wifiProvider === 'Starlink' ? '<img class="am-logo" src="assets/icons/starlink-wifi.svg" alt="Starlink">' : '';
-      col1.push(amenity('wifi', 'Wi-Fi ' + a.wifi, logo ? '' : a.wifiProvider, logo));
+      col1.push(amenity('wifi', 'Wi-Fi' + price(a.wifi), logo ? '' : a.wifiProvider, logo));
     }
     if (a.power) col1.push(amenity('power', 'In-seat power', a.power));
     if (a.entertainment) col2.push(amenity('movie', 'Entertainment'));
-    if (a.food) col2.push(amenity('food', 'Food ' + a.food));
+    if (a.food) col2.push(amenity('food', 'Food' + price(a.food)));
     if (a.beverages) col2.push(amenity('cup', 'Beverages'));
     const foot = qr.ok
       ? '<div class="p-foot"><img src="' + esc(qr.url) + '" alt=""><div><b>Need assistance?</b><span>Scan the QR code to view your flight options, talk to an agent and more.</span></div></div>'

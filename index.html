@@ -155,13 +155,13 @@
       <h2>Flight tab</h2>
       <div class="grid">
         <label>Wi-Fi
-          <select data-path="amenities.wifi"><option value="">None</option><option>($)</option><option>(Free)</option></select>
+          <select data-path="amenities.wifi"><option value="">Not offered</option><option value="(Free)">Free (shown without a marker)</option><option value="($)">Paid, shown as ($)</option></select>
         </label>
         <label>Wi-Fi provider<input data-path="amenities.wifiProvider" placeholder="Starlink" list="wifiProviders"></label>
         <datalist id="wifiProviders"><option>Starlink</option><option>Panasonic</option><option>Viasat</option><option>Thales</option></datalist>
         <label>In-seat power (rows)<input data-path="amenities.power" placeholder="All rows"></label>
         <label>Food
-          <select data-path="amenities.food"><option value="">None</option><option>($)</option><option>(Free)</option></select>
+          <select data-path="amenities.food"><option value="">Not offered</option><option value="(Free)">Free (shown without a marker)</option><option value="($)">Paid, shown as ($)</option></select>
         </label>
         <label class="inline"><input type="checkbox" data-path="amenities.entertainment"> Entertainment</label>
         <label class="inline"><input type="checkbox" data-path="amenities.beverages"> Beverages</label>

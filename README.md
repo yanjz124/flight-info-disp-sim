@@ -51,8 +51,10 @@ data. That covers nearly everything on the screen: live times and delay reason, 
 aircraft and tail, inbound flight, weather, amenities, and the upgrade/standby lists with capacity, booked and checked-in
 counts. Click it again to refresh. Nothing to install, and it works from the GitHub Pages site.
 
-The data only moves between your own browser tabs. Upgrade/standby names (surname + initial, as United shows them publicly)
-stay in your browser's storage, are never committed, and are left out of "Copy link for another device" snapshots.
+The data only moves between your own browser tabs, and upgrade/standby names (surname + initial, as United shows them
+publicly) stay in your browser's storage and are never committed. "Copy link for another device" is the one exception: it
+puts the whole screen in the link, names included, so that the other device shows exactly what this one does. The snapshot
+rides in the URL fragment, which browsers never send to a server, but anyone you give the link to can read it.
 **Finding a flight:** open your airport's departures on FlightView and click the bookmark. The control
 page then lists every departure (flight number, destination, gate, time) as a picker, with a filter box. Pick one and it
 becomes the current flight, with the united.com link built for it; click the bookmark there for everything else.

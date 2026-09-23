@@ -371,11 +371,12 @@
   // ---- top bar ----
   $('openDisplay').onclick = () => window.open('display.html', 'fids-display');
   $('copyLink').onclick = async () => {
+    // The whole screen, upgrade and standby lists included, so the other device shows exactly this one.
+    // It rides in the URL's fragment, which browsers never send to a server, but it is in the link itself:
+    // whoever gets the link gets the names.
     const url = new URL('display.html', location.href);
-    const snap = JSON.parse(JSON.stringify(state));
-    snap.upgrades.list = []; snap.standby.list = [];
-    url.hash = 's=' + encodeURIComponent(F.encodeState(snap));
-    try { await navigator.clipboard.writeText(url.href); alert('Link copied. It is a snapshot without passenger names: later edits here will not reach that device.'); }
+    url.hash = 's=' + encodeURIComponent(F.encodeState(state));
+    try { await navigator.clipboard.writeText(url.href); alert('Link copied: a snapshot of everything on the screen right now, passenger names included. Later edits here will not reach that device.'); }
     catch (e) { prompt('Copy this link:', url.href); }
   };
   $('reset').onclick = () => {

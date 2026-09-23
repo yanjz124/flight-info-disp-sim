@@ -50,9 +50,8 @@
       <h2>United live data <small>one click, nothing to install</small></h2>
       <ol class="steps">
         <li>Drag this button to your bookmarks bar (one time): <a id="bookmarklet" class="bm" href="#">Send to gate display</a></li>
-        <li>Open <a id="uaLink" href="https://www.united.com/en/us/flightstatus" target="_blank" rel="noopener">this flight on united.com</a>
-          <span class="muted" id="uaLinkNote"></span></li>
-        <li>Click the bookmark. This page opens with live times, delay, gate, boarding time, amenities, and the upgrade/standby lists with capacity.</li>
+        <li>Open <a id="uaLink" href="https://www.united.com/en/us/flightstatus" target="_blank" rel="noopener">United Flight Status</a><span class="muted" id="uaLinkNote"></span></li>
+        <li>Click the bookmark. That's it: live times, delay, gate, boarding time, amenities, and the upgrade/standby lists with capacity land here.</li>
         <li>For the next departure from the gate, open <a id="fvLink" href="https://www.flightview.com/" target="_blank" rel="noopener">departures on FlightView</a>
           and click the same bookmark there.</li>
       </ol>
@@ -60,7 +59,7 @@
         <a href="status.html" target="_blank" rel="noopener">Open flight status page &rarr;</a></p>
       <div class="row"><span id="unitedMsg" class="msg"></span></div>
 
-      <h3>Find a flight <small class="muted">when you don't know the route or the flight number yet</small></h3>
+      <h3>Find a flight <small class="muted">optional: united.com's own search is usually quicker</small></h3>
       <div class="seg">
         <label><input type="radio" name="lookupBy" value="number" checked> Date and flight number</label>
         <label><input type="radio" name="lookupBy" value="route"> Date, from and to</label>
@@ -76,10 +75,11 @@
         <button id="lkBtn" class="primary">Look up</button>
         <span id="lkMsg" class="msg"></span>
       </div>
-      <p class="muted">It asks FlightView which legs that flight number flies, or which flights fly that route that day, and
-        takes the origin, destination and scheduled time &mdash; the half that the united.com link in step 2 is missing. Open
-        that link and click the bookmark for the live data. The local feed answers a lookup straight away; without it,
-        FlightView opens in another tab and the same bookmark runs the lookup there.</p>
+      <p class="muted">Step 2 is normally the whole answer: united.com searches by route or by flight number itself. This is
+        for when you would rather not leave this page &mdash; it asks FlightView which legs a flight number flies, or which
+        flights fly a route that day, and fills the flight in here so the link in step 2 points straight at it. The local
+        feed answers a lookup straight away; without it, FlightView opens in another tab and the same bookmark answers it
+        there.</p>
       <div class="results" id="lkList" hidden></div>
 
       <h3>Local feed <small class="muted">optional, keeps the screen up to date on its own</small></h3>

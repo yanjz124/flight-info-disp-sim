@@ -42,8 +42,9 @@ from overwriting your edits.
 
 ## United live data (one-click bookmark)
 
-The control page has a **Send to gate display** button. Drag it to your bookmarks bar once. Then open any flight's details
-page on [united.com Flight Status](https://www.united.com/en/us/flightstatus) and click the bookmark.
+The control page has a **Send to gate display** button. Drag it to your bookmarks bar once. After that the whole routine is:
+go to [united.com Flight Status](https://www.united.com/en/us/flightstatus), find your flight there (it searches by route or
+by flight number), and click the bookmark. That's it.
 
 It runs inside your own united.com tab, calls the same JSON endpoints that page uses, and opens the control page with the
 data. That covers nearly everything on the screen: live times and delay reason, gate, terminal, United's boarding time,
@@ -56,10 +57,10 @@ stay in your browser's storage, are never committed, and are left out of "Copy l
 page then lists every departure (flight number, destination, gate, time) as a picker, with a filter box. Pick one and it
 becomes the current flight, with the united.com link built for it; click the bookmark there for everything else.
 
-**Finding a flight without the route:** the united.com link needs the flight number, the date, the origin *and* the
-destination. **Find a flight** on the control page fills in whatever half is missing: give it a date and a flight number
-and it lists the legs that flight flies that day; give it a date, an origin and a destination and it lists every flight
-on that route that day. Pick one and it becomes the current flight, with the united.com link built for it.
+**Finding a flight without leaving the control page** (optional; searching on united.com is usually quicker): **Find a
+flight** takes a date and a flight number and lists the legs that flight flies that day, or a date, an origin and a
+destination and lists every flight on that route that day. Pick one and it becomes the current flight, with the
+united.com link built for it.
 
 FlightView only answers its own pages, so the lookup runs where that is true: the control page opens FlightView with the
 question in the URL and the same bookmark answers it there. The local feed, running on your own machine, answers without

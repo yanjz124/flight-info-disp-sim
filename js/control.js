@@ -39,7 +39,8 @@
     a.href = ok ? 'https://www.united.com/en/us/flightstatus/details/' + num + '/' + date + '/' + from + '/' + to + '/' + (f.airline || 'UA').toUpperCase()
                 : 'https://www.united.com/en/us/flightstatus';
     a.textContent = ok ? (f.airline || 'UA') + num + ' ' + from + '–' + to + ' on ' + date + ' on united.com' : 'United Flight Status';
-    $('uaLinkNote').textContent = ok ? '' : '(fill in flight number, origin, destination and scheduled departure below for a direct link)';
+    $('uaLinkNote').textContent = ok ? ' — this flight, ready for the bookmark.'
+      : ' and find your flight: it searches by route or by flight number.';
   }
 
   function commit() { F.save(state); }

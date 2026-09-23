@@ -27,6 +27,7 @@
     listEditors.forEach((ed) => ed.render());
     updateUnitedLink();
     updateFlightViewLink();
+    renderLookup();
   }
 
   // Deep link to the flight's united.com details page, built from Flight details.
@@ -152,8 +153,6 @@
     new ListEditor($('standbyEd'), () => state.standby.list),
   ];
 
-  function msg(t, err) { $('unitedMsg').textContent = t; $('unitedMsg').className = 'msg' + (err ? ' err' : ''); }
-
   // Next departure from this gate, from the FlightView departures the bookmark (or the feed) brought in.
   function lookupNextDeparture() {
     const el = $('nextMsg'), d = fvData();
@@ -233,6 +232,78 @@
       '. Open the united.com link above and click the bookmark there for times, amenities and the lists.');
   });
 
+  // ---- find a flight: fills in the route the united.com link needs (see F.lookupUrl) ----
+  function lookupMsg(t, err) { $('lkMsg').textContent = t; $('lkMsg').className = 'msg' + (err ? ' err' : ''); }
+
+  function lookupQuery() {
+    const k = document.querySelector('[name=lookupBy]:checked').value;
+    const q = { k: k, date: $('lkDate').value, al: ($('lkAirline').value.trim() || 'UA').toUpperCase() };
+    if (k === 'number') q.no = $('lkNumber').value.replace(/\D/g, '');
+    else { q.from = $('lkFrom').value.trim().toUpperCase(); q.to = $('lkTo').value.trim().toUpperCase(); }
+    return q;
+  }
+  function lookupProblem(q) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(q.date)) return 'Pick a date.';
+    if (!/^[A-Z0-9]{2}$/.test(q.al)) return 'Give a 2-letter airline code.';
+    if (q.k === 'number') return q.no ? '' : 'Give a flight number.';
+    return /^[A-Z]{3}$/.test(q.from) && /^[A-Z]{3}$/.test(q.to) ? '' : 'Give 3-letter from and to airport codes.';
+  }
+
+  function renderLookup() {
+    const d = F.lastLookup;
+    $('lkList').hidden = !d || !d.results.length;
+    if (!d) return;
+    $('lkList').innerHTML = '<table><thead><tr><th>Flight</th><th>From</th><th>To</th><th>Departs</th><th>Gate</th>' +
+      '<th>Aircraft</th><th>Status</th><th></th></tr></thead><tbody>' +
+      d.results.map((r, i) => '<tr><td>' + esc(r.al + r.no) + '</td><td>' + esc(r.from) + '</td><td>' +
+        esc(r.toName || r.to) + ' (' + esc(r.to) + ')</td><td>' + esc(r.sched.slice(0, 10)) + ' ' +
+        F.fmtTime(r.sched, state.display.clock24) + '</td><td>' + esc(r.gate || '--') + '</td><td>' +
+        esc(r.aircraft) + '</td><td>' + esc(r.st) + '</td><td><button data-lk="' + i + '">Use</button></td></tr>').join('') +
+      '</tbody></table>';
+  }
+  $('lkList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-lk]');
+    if (!b || !F.lastLookup) return;
+    const r = F.lastLookup.results[+b.dataset.lk];
+    F.useLookupResult(state, r);
+    commit(); fillForm(); renderPicker();
+    lookupMsg('Showing ' + r.al + r.no + ' ' + r.from + '-' + r.to + '. The united.com link in step 2 now points at it: ' +
+      'open it and click the bookmark for live times, amenities and the lists.');
+  });
+
+  $('lkBtn').onclick = async () => {
+    const q = lookupQuery(), problem = lookupProblem(q);
+    if (problem) return lookupMsg(problem, true);
+    lookupMsg('Looking up ' + (q.k === 'number' ? q.al + q.no : q.from + '-' + q.to) + ' on ' + q.date + '...');
+    try {
+      const results = await F.lookupViaFeed(state, q);       // the feed answers without any clicking
+      F.lastLookup = { query: q, results: results };
+      renderLookup();
+      lookupMsg(results.length ? 'Found ' + results.length + ' (local feed). Pick one below.'
+                               : 'FlightView has no such flight on ' + q.date + '.', !results.length);
+    } catch (e) {
+      if (!e.offline) return lookupMsg(e.message, true);
+      // No feed, so the same bookmark answers the lookup on FlightView, which is the only site it can ask.
+      const url = F.lookupUrl(q), what = q.k === 'number' ? q.al + q.no : q.from + '-' + q.to;
+      if (window.open(url, 'fids-lookup')) {
+        return lookupMsg('FlightView is open in another tab: click the "Send to gate display" bookmark there ' +
+          'and the results come back here.');
+      }
+      lookupMsg('Open ');                                    // popup blocked: a real click on a link always works
+      const a = document.createElement('a');
+      a.href = url; a.target = 'fids-lookup'; a.rel = 'noopener'; a.textContent = what + ' on FlightView';
+      $('lkMsg').append(a, ' and click the "Send to gate display" bookmark there.');
+    }
+  };
+  document.querySelectorAll('[name=lookupBy]').forEach((el) => el.addEventListener('change', showLookupFields));
+  function showLookupFields() {
+    const k = document.querySelector('[name=lookupBy]:checked').value;
+    document.querySelectorAll('[data-lookup]').forEach((el) => { el.hidden = el.dataset.lookup !== k; });
+  }
+  showLookupFields();
+  $('lkDate').value = F.airportNow(state.flight.utcOffsetMin).toISOString().slice(0, 10);
+  $('lkAirline').value = state.flight.airline || 'UA';
+
   // ---- United bookmarklet ----
   function unitedMsg(t, err) { $('unitedMsg').textContent = t; $('unitedMsg').className = 'msg' + (err ? ' err' : ''); }
   const bm = $('bookmarklet');
@@ -275,6 +346,12 @@
           (u.delayMin ? ' · delayed ' + u.delayMin + ' min' + (u.delayCause ? ' (' + u.delayCause + ')' : '') : '') +
           ' · ' + state.upgrades.list.length + ' on upgrade list, ' + state.standby.list.length + ' on standby.');
       }
+      const lk = F.importLookupFromHash(state);
+      if (lk) {
+        imported = true;
+        fillForm();
+        lookupMsg(lk.results.length + ' found on FlightView. Pick one below to show it.');
+      }
       const fv = F.importFlightViewFromHash(state);
       if (fv) {
         imported = true;
@@ -291,9 +368,9 @@
   renderPicker();
 
   // ---- top bar ----
-  $('openDisplay').onclick = () => window.open('index.html', 'fids-display');
+  $('openDisplay').onclick = () => window.open('display.html', 'fids-display');
   $('copyLink').onclick = async () => {
-    const url = new URL('index.html', location.href);
+    const url = new URL('display.html', location.href);
     const snap = JSON.parse(JSON.stringify(state));
     snap.upgrades.list = []; snap.standby.list = [];
     url.hash = 's=' + encodeURIComponent(F.encodeState(snap));
@@ -302,7 +379,8 @@
   };
   $('reset').onclick = () => {
     if (!confirm('Reset everything to the demo flight?')) return;
-    state = F.defaultState(); commit(); fillForm(); $('results').hidden = true; msg('');
+    state = F.defaultState(); commit(); fillForm();
+    F.lastLookup = null; renderLookup(); lookupMsg(''); unitedMsg('');
   };
 
   F.onChange((s) => { state = s; fillForm(); });   // e.g. arrow keys pressed on the display

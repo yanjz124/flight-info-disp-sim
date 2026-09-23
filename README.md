@@ -6,8 +6,9 @@ A static web app that looks like an airline boarding gate screen. It can pull li
 
 It has no backend, so it runs on GitHub Pages.
 
-- `index.html`: the display, a 1920x1080 layout scaled to fit any screen. Double-click or press `F` for fullscreen. `←` / `→` change the boarding group.
-- `control.html`: the config and control page.
+- `index.html`: the config and control page, so the site's own address opens it. (`control.html`, where it used to
+  live, redirects here.)
+- `display.html`: the display, a 1920x1080 layout scaled to fit any screen. Double-click or press `F` for fullscreen. `←` / `→` change the boarding group.
 - `status.html`: a flight status page for the same flight.
 
 ## Running it
@@ -16,11 +17,11 @@ It has no backend, so it runs on GitHub Pages.
 
 ```sh
 python -m http.server 8000
-# open http://localhost:8000/control.html
+# open http://localhost:8000/
 ```
 
 **GitHub Pages:** push the repo, then go to Settings → Pages → Deploy from branch → `main` / root.
-Then open `https://<user>.github.io/<repo>/control.html`.
+Then open `https://<user>.github.io/<repo>/` — that address is the control page.
 
 ## Where the data comes from
 
@@ -29,6 +30,7 @@ No API keys and no accounts: everything is read from pages you open yourself, or
 | What | Source |
 |---|---|
 | Which flight, its gate and times | FlightView's airport departures (via the bookmark, or the feed) |
+| Finding a flight from a date and a flight number, or a date and a route | FlightView's flight and route pages |
 | Delay and reason, boarding time, terminal, aircraft, inbound flight, weather | united.com flight status (via the bookmark, or the feed) |
 | Amenities, cabin names, Wi-Fi provider | united.com flight status |
 | Upgrade and standby lists with capacity | united.com flight status |
@@ -53,6 +55,15 @@ stay in your browser's storage, are never committed, and are left out of "Copy l
 **Finding a flight:** open your airport's departures on FlightView and click the bookmark. The control
 page then lists every departure (flight number, destination, gate, time) as a picker, with a filter box. Pick one and it
 becomes the current flight, with the united.com link built for it; click the bookmark there for everything else.
+
+**Finding a flight without the route:** the united.com link needs the flight number, the date, the origin *and* the
+destination. **Find a flight** on the control page fills in whatever half is missing: give it a date and a flight number
+and it lists the legs that flight flies that day; give it a date, an origin and a destination and it lists every flight
+on that route that day. Pick one and it becomes the current flight, with the united.com link built for it.
+
+FlightView only answers its own pages, so the lookup runs where that is true: the control page opens FlightView with the
+question in the URL and the same bookmark answers it there. The local feed, running on your own machine, answers without
+a tab at all — if it's reachable, **Look up** uses it.
 
 **Next departure from the gate:** United's data doesn't include it, so the control page links to the airport's
 departures on [FlightView](https://www.flightview.com/). Click the same bookmark there: it reads FlightView's departures
@@ -92,7 +103,7 @@ Passenger names never leave your machine.
 `wallpaper/` is a web wallpaper: copy the folder into Wallpaper Engine's `myprojects` directory (or open it from the
 editor) and it shows the display full-screen behind your desktop. Its **Display link** setting takes any URL:
 
-- the plain display URL, which stays live if the local feed is running;
+- the plain display URL (`.../display.html`), which stays live if the local feed is running;
 - or a snapshot link from **Copy link for another device**, which pins one flight's settings.
 
 Wallpaper Engine has its own browser storage, so the control page can't push changes into it directly; use the feed or a
@@ -105,7 +116,7 @@ inbound flight, weather, amenities, and the standby and upgrade lists. It uses t
 
 ## How the pages sync
 
-Pages on the **same browser** share state through localStorage, so edits on `control.html` show up on the display right away (for example, a laptop driving a TV over HDMI).
+Pages on the **same browser** share state through localStorage, so edits on the control page show up on the display right away (for example, a laptop driving a TV over HDMI).
 
 For a **different device**, use **Copy link for another device**. It puts a snapshot of the current state in the URL. Later edits won't reach that device. The local feed keeps such a device up to date if it can reach this computer.
 

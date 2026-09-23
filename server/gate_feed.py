@@ -32,6 +32,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,6 +44,11 @@ CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 PROFILE = pathlib.Path(__file__).with_name(".chrome-profile")
 FV_PAGE = "https://www.flightview.com/airport/{airport}/departures"
 FV_API = "https://app-api.flightview.com/api/airport/{airport}/departures"
+FV_FLIGHT = "https://app-api.flightview.com/api/flight/{al}/{no}?departureDate={date}"
+FV_ROUTE = "https://app-api.flightview.com/api/v2/route/{frm}/{to}/{date}?airlineCode={al}"
+# FlightView's app API only answers its own site, so a lookup from here has to look like its page.
+FV_HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/140.0 Safari/537.36",
+              "Referer": "https://www.flightview.com/", "Origin": "https://www.flightview.com"}
 UA_PAGE = "https://www.united.com/en/us/flightstatus/details/{num}/{date}/{frm}/{to}/{carrier}"
 GONE = re.compile(r"depart|in air|en route|arriv|landed|cancel", re.I)
 # Calendar mode: a random departure comes from one of United's hubs, so there is always one to pick.
@@ -195,6 +201,48 @@ def fetch_united(page, dep):
         }""",
         {"num": str(dep["no"]), "date": dep["date"], "frm": dep["from"], "to": dep["to"], "carrier": dep["al"]},
     )
+
+
+def fv_json(url):
+    req = urllib.request.Request(url, headers=FV_HEADERS)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode("utf-8", "replace"))
+
+
+def lookup(q):
+    """Find a flight from the half of it that is known: the legs a flight number flies on a date, or every
+    flight on a route that day. Answers the way the bookmark does, which is enough to build the united.com
+    URL: a route search already knows the route and the date, a flight number needs each leg read."""
+    date = q.get("date") or ""
+    al = (q.get("al") or "UA").upper()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+        raise ValueError("Give a date as YYYY-MM-DD.")
+    if not re.fullmatch(r"[A-Z0-9]{2}", al):
+        raise ValueError("Give a 2-letter airline code.")
+    if q.get("k") != "number":
+        frm, to = (q.get("from") or "").upper(), (q.get("to") or "").upper()
+        if not (re.fullmatch(r"[A-Z]{3}", frm) and re.fullmatch(r"[A-Z]{3}", to)):
+            raise ValueError("Give 3-letter from and to airport codes.")
+        flights = fv_json(FV_ROUTE.format(frm=frm, to=to, date=date, al=al)).get("flights") or []
+        return [{"al": f["airlineCode"], "no": str(f["flightNumber"]), "from": frm, "to": to, "date": date,
+                 "sch": f.get("scheduledTime") or f.get("departureTime"), "upd": f.get("departureTime"),
+                 "st": f.get("displayStatus")} for f in flights]
+    no = re.sub(r"\D", "", q.get("no") or "")
+    if not no:
+        raise ValueError("Give a flight number.")
+    legs = fv_json(FV_FLIGHT.format(al=al, no=no, date=date)).get("flights") or []
+    out = []
+    for leg in legs[:4]:
+        frm = leg.get("departureAirportCode")
+        if not frm:
+            continue
+        try:
+            detail = fv_json(FV_FLIGHT.format(al=al, no=no, date=date) + "&departureAirport=" + frm).get("flight")
+        except Exception:
+            continue
+        if detail:
+            out.append({"al": al, "no": no, "f": detail})
+    return out
 
 
 def cycle(args):
@@ -415,6 +463,15 @@ def main():
             self.send_response(204); self.cors(); self.end_headers()
 
         def do_GET(self):
+            # GET /lookup?k=number&al=UA&no=353&date=2026-09-25 (or k=route&from=EWR&to=SFO), from a control page.
+            if self.path.startswith("/lookup"):
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                try:
+                    return self.reply(200, {"results": lookup({k: v[0] for k, v in query.items()})})
+                except ValueError as e:
+                    return self.reply(400, {"error": str(e)})
+                except Exception as e:
+                    return self.reply(502, {"error": "FlightView lookup failed: " + str(e)[:150]})
             if not self.path.startswith("/state"):
                 return self.reply(404, {"error": "not found"})
             with lock:

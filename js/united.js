@@ -23,19 +23,73 @@ window.FIDS = window.FIDS || {};
       note.appendChild(a);
     };
 
-    // FlightView airport departures page: send every departure with its gate (used for "Next departure").
+    var fvGet = function (path) {
+      return fetch('https://app-api.flightview.com/api/' + path, { credentials: 'include' }).then(function (r) {
+        if (!r.ok) throw new Error(r.status + ' from FlightView');
+        return r.json();
+      });
+    };
+    var mapDeps = function (list) {
+      return list.map(function (x) {
+        return { al: x.airlineCode, no: x.flightNumber, date: x.flightDate, sch: x.scheduledTime, upd: x.updatedTime,
+                 gate: x.gate, to: x.airportCode, toName: x.airport, st: x.displayStatus };
+      });
+    };
+    // One leg of one flight on one date: route, times, gate, terminal, aircraft. null if there is no such leg.
+    var fvLeg = function (al, no, from, date) {
+      return fvGet('flight/' + al + '/' + no + '?departureDate=' + date + '&departureAirport=' + from)
+        .then(function (d) { return d && d.flight ? { al: al, no: String(no), f: d.flight } : null; })
+        .catch(function () { return null; });
+    };
+    // A lookup the control page left in this page's hash: answer that instead of reading the page.
+    var q = null;
+    try {
+      var qm = location.hash.match(/(?:^#|&)fidsq=([^&]+)/);
+      if (qm) q = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(qm[1])))));
+    } catch (e) {}
+
     if (location.hostname.indexOf('flightview.com') >= 0) {
+      if (q) {
+        var qNote = toast('Looking up ' + (q.k === 'number' ? q.al + q.no : q.from + '-' + q.to) + ' on ' + q.date + '...');
+        var failed = function (e) {
+          qNote.textContent = 'Lookup failed: ' + e.message;
+          setTimeout(function () { qNote.remove(); }, 8000);
+        };
+        var found = function (results) {
+          results = results.filter(Boolean);
+          if (!results.length) return failed(new Error('FlightView has no such flight on ' + q.date + '.'));
+          send('lookup', { fetchedAt: new Date().toISOString(), query: q, results: results }, qNote);
+        };
+        if (q.k === 'number') {
+          fvGet('flight/' + q.al + '/' + q.no + '?departureDate=' + q.date)
+            .then(function (d) {
+              return Promise.all(((d && d.flights) || []).slice(0, 4)
+                .filter(function (l) { return l.departureAirportCode; })
+                .map(function (l) { return fvLeg(q.al, q.no, l.departureAirportCode, q.date); }));
+            })
+            .then(function (rs) { found(rs); })
+            .catch(failed);
+        } else {
+          // Every flight on the route that day. The route and the date are the ones that were asked for,
+          // so these rows need no second call: they already have all the united.com URL needs.
+          fvGet('v2/route/' + q.from + '/' + q.to + '/' + q.date + '?airlineCode=' + q.al)
+            .then(function (d) {
+              found(((d && d.flights) || []).map(function (x) {
+                return { al: x.airlineCode, no: String(x.flightNumber), from: q.from, to: q.to, date: q.date,
+                         sch: x.scheduledTime || x.departureTime, upd: x.departureTime, st: x.displayStatus };
+              }));
+            })
+            .catch(failed);
+        }
+        return;
+      }
+
+      // Airport departures page: send every departure with its gate (used for "Next departure").
       var ap = location.pathname.match(/airport\/([A-Za-z]{3})/);
       if (!ap) { alert("Open an airport's Departures page on FlightView, then click this bookmark again."); return; }
       var code = ap[1].toUpperCase(), fvNote = toast('Grabbing ' + code + ' departures for the gate display...');
-      fetch('https://app-api.flightview.com/api/airport/' + code + '/departures', { credentials: 'include' })
-        .then(function (r) { if (!r.ok) throw new Error(r.status + ' from FlightView'); return r.json(); })
-        .then(function (list) {
-          send('fv', { airport: code, fetchedAt: new Date().toISOString(), departures: list.map(function (x) {
-            return { al: x.airlineCode, no: x.flightNumber, date: x.flightDate, sch: x.scheduledTime, upd: x.updatedTime,
-                     gate: x.gate, to: x.airportCode, toName: x.airport, st: x.displayStatus };
-          }) }, fvNote);
-        })
+      fvGet('airport/' + code + '/departures')
+        .then(function (list) { send('fv', { airport: code, fetchedAt: new Date().toISOString(), departures: mapDeps(list) }, fvNote); })
         .catch(function (e) { fvNote.textContent = 'Could not grab departures: ' + e.message; });
       return;
     }
@@ -136,6 +190,90 @@ window.FIDS = window.FIDS || {};
     s.next = { dest: F.airportLabel(next.to, next.toName), flight: next.al + next.no, time: next.t,
                status: /delay/i.test(next.st) ? 'Delayed' : 'On Time' };
     return { ok: true, picker: true, msg: 'Next departure from gate ' + f.gate + ': ' + next.al + next.no + ' to ' + s.next.dest + ' at ' + F.fmtTime(next.t) + ' (FlightView).' };
+  };
+
+  // ---- finding a flight when only the date and the flight number, or the date and the route, are known ----
+  // united.com's details URL needs number, date, origin and destination, so the missing half is looked up on
+  // FlightView first. The page itself can't call FlightView (it only allows its own origin), so the query
+  // rides in the hash of a FlightView page and the same bookmark answers it there; the local feed, being on
+  // this computer, can answer it directly instead.
+
+  // Where to click the bookmark for a lookup.
+  F.lookupUrl = function (q) {
+    const path = q.k === 'number' ? '/flight-tracker/' + q.al + '/' + q.no
+                                  : '/flight-tracker/by-route-results/' + q.from + '/' + q.to + '/' + q.date + '?airlineCode=' + q.al;
+    return 'https://www.flightview.com' + path + '#fidsq=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(q)))));
+  };
+
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  // FlightView writes times as "18:30, Sep 22", with no year; `iso` is the same time as a full timestamp,
+  // which is the actual departure once a flight has gone, so only its date is trusted here.
+  function fvWhen(text, iso) {
+    const m = /^(\d{1,2}):(\d{2})(?:,\s*([A-Za-z]{3})\s+(\d{1,2}))?/.exec(text || '');
+    if (!m) return (iso || '').slice(0, 16);
+    const clock = String(+m[1]).padStart(2, '0') + ':' + m[2];
+    const ref = (iso || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+    if (!m[3]) return ref + 'T' + clock;
+    const month = MONTHS.indexOf(m[3]), refMonth = +ref.slice(5, 7) - 1;
+    let year = +ref.slice(0, 4);
+    if (refMonth === 11 && month === 0) year++;              // a leg that runs past New Year
+    if (refMonth === 0 && month === 11) year--;
+    return year + '-' + String(month + 1).padStart(2, '0') + '-' + String(+m[4]).padStart(2, '0') + 'T' + clock;
+  }
+
+  // One FlightView result -> the fields the control page shows and the united.com link needs. A route search
+  // already answers in the route and on the date that were asked for; a flight number needs its legs read.
+  F.lookupResult = function (r) {
+    if (!r.f) {
+      const at = (t) => {                                    // "6:00, Sep 24" on the date that was asked for
+        const m = /^(\d{1,2}):(\d{2})/.exec(t || '');
+        return m ? r.date + 'T' + String(+m[1]).padStart(2, '0') + ':' + m[2] : '';
+      };
+      const sched = at(r.sch), est = at(r.upd);
+      return { al: r.al, no: String(r.no), from: r.from, fromName: '', to: r.to, toName: '',
+               sched: sched, est: est && est !== sched ? est : '', arr: '',
+               gate: '', terminal: '', aircraft: '', st: r.st || '' };
+    }
+    const d = r.f.departure || {}, a = r.f.arrival || {};
+    const sched = fvWhen(d.scheduledTime, d.departureDateTime);
+    const est = fvWhen(d.estimatedTime || d.outGateTime || d.offGroundTime, d.departureDateTime);
+    return {
+      al: r.al, no: String(r.no),
+      from: d.airportCode || '', fromName: d.airportCity || d.airport || '',
+      to: a.airportCode || '', toName: a.airportCity || a.airport || '',
+      sched: sched, est: est && est !== sched ? est : '',
+      arr: fvWhen(a.estimatedTime || a.scheduledTime, a.arrivalDateTime),
+      gate: d.gate || '', terminal: d.terminal || '',
+      aircraft: (r.f.aircraft && r.f.aircraft.name) || '', st: r.f.flightStatus || '',
+    };
+  };
+
+  // Control page: "#lookup=..." from the bookmark. Keeps the results for the picker; returns them, or null.
+  F.importLookupFromHash = function (s) {
+    const d = fromHash('lookup');
+    if (!d) return null;
+    F.lastLookup = { query: d.query, fetchedAt: d.fetchedAt, results: (d.results || []).map(F.lookupResult) };
+    return F.lastLookup;
+  };
+
+  // Show a looked-up flight: enough to build the united.com link, which then fills in everything else.
+  F.useLookupResult = function (s, r) {
+    const f = s.flight;
+    const incoming = { airline: r.al, number: r.no, sched: r.sched, originCode: r.from };
+    if (F.flightKey(incoming) !== F.flightKey(f)) F.resetFlightData(s);
+    f.airline = r.al;
+    f.number = r.no;
+    f.originCode = r.from;
+    f.destCode = r.to;
+    f.destLabel = F.airportLabel(r.to, r.toName);
+    f.sched = r.sched;
+    f.est = r.est;
+    f.arr = r.arr;
+    if (r.gate) f.gate = r.gate;
+    if (r.terminal) f.terminal = r.terminal;
+    if (r.aircraft) f.aircraft = r.aircraft;
+    f.apiStatus = r.st;
+    f.lock = false;
   };
 
   const hhmm = (t) => (t || '').slice(0, 16);                          // "2026-09-22T10:59:00" -> local wall clock

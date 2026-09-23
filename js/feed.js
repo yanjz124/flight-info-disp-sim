@@ -56,6 +56,23 @@ window.FIDS = window.FIDS || {};
   };
   F.describeFeed = (c) => !c || !c.mode ? 'nothing yet' : c.mode === 'calendar' ? "your calendar's UA flights" : c.airport + ' gate ' + c.gate;
 
+  // Ask the feed to find a flight (see F.lookupUrl): it runs on this computer, so it can call FlightView
+  // directly and answer without a browser tab. Returns the same results the bookmark would hand over.
+  F.lookupViaFeed = async function (s, q) {
+    const url = (s.feed.url || '').replace(/\/$/, '') + '/lookup?' + new URLSearchParams(q);
+    let res;
+    try {
+      res = await fetch(url, { cache: 'no-store' });
+    } catch (e) {
+      const err = new Error('Feed not reachable at ' + s.feed.url);
+      err.offline = true;                                    // the caller asks FlightView in a tab instead
+      throw err;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || res.status + ' from the feed');
+    return (d.results || []).map(F.lookupResult);
+  };
+
   F.refreshFeed = async function (s) {
     return F.applyFeed(s, await F.fetchFeed(s));
   };

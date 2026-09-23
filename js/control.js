@@ -181,12 +181,34 @@
 
   // ---- optional local feed (server/gate_feed.py) ----
   function feedMsg(t, err) { $('feedMsg').textContent = t; $('feedMsg').className = 'msg' + (err ? ' err' : ''); }
-  async function feedOnce() {
-    feedMsg('Fetching from the local feed...');
-    try { feedMsg(await F.refreshFeed(state)); commit(); fillForm(); renderPicker(); }
+  // One reading, applied and reported. Returns what the feed served, so the chase below can tell whether
+  // it has finished a cycle yet, or null if the feed could not be reached at all.
+  async function feedOnce(quiet) {
+    if (!quiet) feedMsg('Fetching from the local feed...');
+    let d;
+    try { d = await F.fetchFeed(state); }
+    catch (e) { feedMsg(e.message, true); return null; }
+    try { feedMsg(F.applyFeed(state, d)); }
     catch (e) { feedMsg(e.message, true); }
+    commit(); fillForm(); renderPicker();
+    return d;
   }
-  $('feedBtn').onclick = feedOnce;
+  $('feedBtn').onclick = () => feedOnce();
+
+  // A new setup makes the feed drop what it had and start a cycle at once, so chase that first reading
+  // rather than sit on the old flight until the next poll comes round. A cycle takes about a minute:
+  // Chrome, then FlightView's board, then united.com.
+  let chasing = 0;
+  function chaseFeed() {
+    clearTimeout(chasing);
+    const deadline = Date.now() + 300000;
+    const step = async () => {
+      const d = await feedOnce(true);
+      const done = !d || (d.fetchedAt && (d.flight || d.error));   // a cycle ran, for better or worse
+      if (!done && Date.now() < deadline) chasing = setTimeout(step, 4000);
+    };
+    step();
+  }
   $('icsUrl').value = F.getIcs();
   $('feedApply').onclick = async () => {
     const f = state.feed, cal = f.follow === 'calendar';
@@ -197,7 +219,8 @@
       if (c && c.mode === 'gate') { state.flight.gate = c.gate; state.flight.originCode = c.airport; }
       f.enabled = true;
       commit(); fillForm();
-      feedMsg('The feed now follows ' + F.describeFeed(c) + '. The first update takes about a minute.');
+      feedMsg('The feed now follows ' + F.describeFeed(c) + '. Fetching its first reading (about a minute)...');
+      chaseFeed();
     } catch (e) { feedMsg(e.message, true); }
   };
   F.startFeedPolling(() => state, (m) => { feedMsg(m); commit(); fillForm(); renderPicker(); },

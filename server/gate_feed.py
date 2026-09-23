@@ -245,6 +245,19 @@ def lookup(q):
     return out
 
 
+def no_departure(deps, args):
+    """Why the gate is empty, with the gates in the same concourse that do have a departure -- FlightView's
+    board only covers the next few hours, so a quiet gate really does look like a wrong one."""
+    msg = f"No upcoming {args.airline} departure at gate {args.gate}." if args.airline         else f"No upcoming departure at gate {args.gate}."
+    prefix = re.match(r"[A-Z]*", norm_gate(args.gate)).group(0)
+    near = {d["gate"] for d in deps if d["gate"] and norm_gate(d["gate"]).startswith(prefix)
+            and (not args.airline or d["al"] == args.airline)}
+    if near:
+        listed = sorted(near, key=lambda g: (len(g), g))
+        msg += " Gates with one now: " + ", ".join(listed[:12]) + (", ..." if len(listed) > 12 else "")
+    return msg
+
+
 def cycle(args):
     with Chrome(args) as page:
         deps = fetch_departures(page, args.airport)
@@ -252,9 +265,9 @@ def cycle(args):
         dep = pick_flight(deps, args.gate, args.airline, args.grace, airport_tz(args.airport))
         if not dep:
             with lock:
-                state.update(fetchedAt=datetime.now().isoformat(timespec="seconds"),
+                state.update(fetchedAt=datetime.now().isoformat(timespec="seconds"), flight=None,
                              fv={"airport": args.airport, "departures": deps},
-                             error=f"No upcoming {args.airline or ''} departure at gate {args.gate}.")
+                             error=no_departure(deps, args))
             note(state["error"])
             return
         dep = {**dep, "from": args.airport}

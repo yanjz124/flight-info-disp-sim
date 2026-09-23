@@ -31,6 +31,9 @@ window.FIDS = window.FIDS || {};
       msg = (r && r.ok ? ' · ' + r.msg : '');
     }
     s.feed = { ...s.feed, updated: d.fetchedAt || new Date().toISOString(), error: d.error || '' };
+    // The feed found nothing to follow. Whatever is on screen is the flight from before, so say that rather
+    // than report it as an update: otherwise a gate with no departures looks exactly like a gate with one.
+    if (!d.flight) throw new Error(d.error || 'The feed has no flight to follow yet.');
     return (s.flight.airline + s.flight.number) + ' at gate ' + (s.flight.gate || '?') +
       ' from the local feed' + (d.note ? ': ' + d.note : '') + (d.error ? ' (' + d.error + ')' : '') + msg;
   };

@@ -118,6 +118,7 @@ window.FIDS = window.FIDS || {};
         tabMode: 'rotate',       // 'rotate' | 'flight' | 'upgrades' | 'standbys'
         tabSec: 10,
         panelSec: 8,             // rotation speed of promos and boarding sub-views
+        promoTurn: true,         // "Arrival - Cleaning - Boarding": where the aircraft has got to
         promoApp: true,
         promoWifi: true,
         promoPass: true,

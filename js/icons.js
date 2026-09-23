@@ -8,6 +8,7 @@ window.FIDS = window.FIDS || {};
     plane: 'plane', planeRight: 'plane', takeoff: 'plane-departing', land: 'plane-arriving', clock: 'flight-status',
     arrow: 'arrow-right', wifi: 'wifi', power: 'in-seat-power', movie: 'movies', food: 'food', cup: 'beverage',
     check: 'checkmark', delay: 'delays', weather: 'mostly-cloudy', seat: 'seat', upgrade: 'upgrade', standby: 'standby',
+    clean: 'spray-bottle', boarding: 'traveler',
   };
 
   F.icon = function (name, cls) {

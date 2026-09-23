@@ -80,8 +80,11 @@
     const a = s.amenities, f = s.flight;
     const col1 = [], col2 = [];
     if (a.wifi) {
-      const logo = a.wifiProvider === 'Starlink' ? '<img class="am-logo" src="assets/icons/starlink-wifi.svg" alt="Starlink">' : '';
-      col1.push(amenity('wifi', 'Wi-Fi' + price(a.wifi), logo ? '' : a.wifiProvider, logo));
+      // Starlink is the one provider United puts on the screen, as its own logo. Anyone else goes unnamed
+      // when the Wi-Fi costs money -- the price is the point, not whose hardware it is.
+      const starlink = a.wifiProvider === 'Starlink';
+      const logo = starlink ? '<img class="am-logo" src="assets/icons/starlink-wifi.svg" alt="Starlink">' : '';
+      col1.push(amenity('wifi', 'Wi-Fi' + price(a.wifi), starlink || a.wifi === '($)' ? '' : a.wifiProvider, logo));
     }
     if (a.power) col1.push(amenity('power', 'In-seat power', a.power));
     if (a.entertainment) col2.push(amenity('movie', 'Entertainment'));
@@ -151,8 +154,30 @@
 
   // ---------- right panel ----------
 
+  // The turnaround the way the gate screens show it: arrival, cleaning, boarding along one line. The
+  // inbound flight from united.com says whether the aircraft is still on its way, so the wording follows it.
+  function turnPanel(s, c24) {
+    const ib = s.united.inbound;
+    const now = F.airportNow(s.flight.utcOffsetMin).toISOString().slice(0, 16);
+    const here = !!(ib && ib.arr && ib.arr <= now);
+    const track = [['land', 'Arrival'], ['clean', 'Cleaning'], ['boarding', 'Boarding']]
+      .map(([ic, label]) => '<div class="step"><span>' + label + '</span><span class="dot">' + I(ic) + '</span></div>')
+      .join('<i class="link"></i>');
+    const msg = here
+      ? 'Your plane is here and is being cleaned and prepared for boarding.'
+      : 'Your plane is on its way, so you’ve got time to relax or grab a snack.';
+    const from = ib && (F.AIRPORTS[ib.from] || ib.fromName || ib.from);
+    const sub = ib && ib.flight
+      ? '<div class="turn-sub">' + esc(ib.flight) + (from ? ' from ' + esc(from) : '') +
+        (ib.arr ? ' · ' + (here ? 'arrived ' : 'arrives ') + F.fmtTime(ib.arr, c24) : '') + '</div>'
+      : '';
+    return '<div class="rp turn"><div class="center"><div class="track">' + track + '</div>' +
+      '<div class="turn-msg">' + msg + '</div>' + sub + '</div></div>';
+  }
+
   function promos(s, c24) {
     const d = s.display, out = [];
+    if (d.promoTurn) out.push(turnPanel(s, c24));
     if (d.promoApp) out.push('<div class="rp promo">' + (qr.ok ? '<img class="qr" src="' + esc(qr.url) + '" alt="">' : '') +
       '<div class="center"><h2>Download the<br>United app now</h2><ul><li>Get Wi-Fi and entertainment</li><li>Buy snacks and drinks</li><li>Check your flight status</li></ul></div></div>');
     if (d.promoWifi) out.push('<div class="rp promo"><div class="center"><h2>Buy Wi-Fi for<br>your flight</h2><div class="prices">' +

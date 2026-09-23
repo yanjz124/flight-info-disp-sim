@@ -264,6 +264,8 @@
     $('err').hidden = true;
     render();
   }, (m) => {
+    F.save(state);                    // the gate being followed may have changed even with nothing at it
+    render();
     $('err').textContent = 'Local feed: ' + m;
     $('err').hidden = false;
   });

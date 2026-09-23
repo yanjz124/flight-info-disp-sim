@@ -21,6 +21,12 @@ window.FIDS = window.FIDS || {};
   F.applyFeed = function (s, d) {
     if (!d || (!d.united && !d.fv)) throw new Error(d && d.error ? d.error : 'The feed is getting its first update for ' + F.describeFeed(d && d.config) + ' (about a minute)...');
     let msg = '';
+    // Following a gate makes this that gate's screen, so it shows the gate that was set straight away --
+    // a flight that turns up there brings its own gate, in FlightView's spelling, and wins below.
+    if (d.config && d.config.mode === 'gate' && d.config.gate) {
+      s.flight.gate = d.config.gate;
+      if (d.config.airport) s.flight.originCode = d.config.airport;
+    }
     if (d.flight && d.fv) {
       // The server picked which flight is at the gate; follow it even before United's data lands.
       F.useFlightViewDeparture(s, d.flight, d.fv.airport);

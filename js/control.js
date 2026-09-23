@@ -194,11 +194,14 @@
     feedMsg('Sending to the feed...');
     try {
       const c = await F.configureFeed(state, cal ? { ics: F.getIcs() } : { airport: f.airport, gate: f.gate });
-      if (!f.enabled) { f.enabled = true; commit(); fillForm(); }
+      if (c && c.mode === 'gate') { state.flight.gate = c.gate; state.flight.originCode = c.airport; }
+      f.enabled = true;
+      commit(); fillForm();
       feedMsg('The feed now follows ' + F.describeFeed(c) + '. The first update takes about a minute.');
     } catch (e) { feedMsg(e.message, true); }
   };
-  F.startFeedPolling(() => state, (m) => { feedMsg(m); commit(); fillForm(); renderPicker(); }, (m) => feedMsg(m, true));
+  F.startFeedPolling(() => state, (m) => { feedMsg(m); commit(); fillForm(); renderPicker(); },
+                     (m) => { feedMsg(m, true); commit(); fillForm(); });
 
   // Link to this airport's departures on FlightView, where the bookmark reads the gate list.
   function updateFlightViewLink() {

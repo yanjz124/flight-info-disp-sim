@@ -30,17 +30,27 @@
     renderLookup();
   }
 
-  // Deep link to the flight's united.com details page, built from Flight details.
+  // The flight the page starts on, so the shortcut below can own up to still pointing at it.
+  const DEMO = F.defaultState().flight;
+  const isDemoFlight = (f) => !state.united.updated && f.airline === DEMO.airline &&
+                              String(f.number) === DEMO.number && f.originCode === DEMO.originCode &&
+                              f.destCode === DEMO.destCode;
+
+  // Step 2 links to United's search, because that is where a flight is found. Whatever is in Flight details
+  // also has a details page, so offer that as a shortcut -- saying plainly when it is still the demo flight.
   function updateUnitedLink() {
-    const f = state.flight, a = $('uaLink');
+    const f = state.flight, note = $('uaLinkNote');
     const num = String(f.number || '').replace(/\D/g, ''), date = (f.sched || '').slice(0, 10);
     const from = (f.originCode || '').toUpperCase(), to = (f.destCode || '').toUpperCase();
-    const ok = num && date && from.length === 3 && to.length === 3;
-    a.href = ok ? 'https://www.united.com/en/us/flightstatus/details/' + num + '/' + date + '/' + from + '/' + to + '/' + (f.airline || 'UA').toUpperCase()
-                : 'https://www.united.com/en/us/flightstatus';
-    a.textContent = ok ? (f.airline || 'UA') + num + ' ' + from + '–' + to + ' on ' + date + ' on united.com' : 'United Flight Status';
-    $('uaLinkNote').textContent = ok ? ' — this flight, ready for the bookmark.'
-      : ' and find your flight: it searches by route or by flight number.';
+    note.textContent = '';
+    if (!(num && date && from.length === 3 && to.length === 3)) return;
+    const a = document.createElement('a');
+    a.href = 'https://www.united.com/en/us/flightstatus/details/' + num + '/' + date + '/' + from + '/' + to + '/' + (f.airline || 'UA').toUpperCase();
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = (f.airline || 'UA') + num + ' ' + from + '–' + to + ' on ' + date;
+    note.append(' Or go straight to ', a, isDemoFlight(f) ? ' — though that is still the demo flight.'
+                                                          : ', the flight set below.');
   }
 
   function commit() { F.save(state); }

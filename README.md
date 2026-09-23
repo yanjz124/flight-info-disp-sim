@@ -129,4 +129,5 @@ For a **different device**, use **Copy link for another device**. It puts a snap
 - `assets/qr-assistance.png`: the "Need assistance?" QR code (links to United's travel help page), also used on the app promo. If it's missing, the Flight tab shows the estimated arrival instead.
 - `assets/icons/united-sprite.svg`: United's icon sprite from united.com, used for amenities and labels.
 
-Reference photos go in `ref/` (ignored by git). Colors and sizes are CSS variables at the top of `css/display.css`.
+Reference photos go in `ref/` (ignored by git). Colors and sizes are CSS variables at the top of `css/display.css`;
+the colours and the row heights there are sampled from United's own design-system screens rather than guessed.

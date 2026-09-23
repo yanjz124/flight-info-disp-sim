@@ -2,17 +2,18 @@
    Colors and proportions are matched to reference photos of United's current gate screens. */
 :root {
   --font: "Figtree", "Segoe UI", Arial, sans-serif;
-  --frame: #1d1d1f;        /* header, tab row, footer */
-  --band: #2152e3;         /* flight-number band */
-  --royal: #2638b8;        /* right-panel blue */
+  --frame: #000;        /* header, tab row, footer */
+  --band: #1414d2;         /* flight-number band */
+  --royal: #051464;        /* right-panel blue */
   --deep: #1b1fd2;         /* current-group tile */
   --mint: #62e6a6;         /* next-group tile */
-  --panel: #efeeea;        /* left panel */
-  --tab-off: #a4a4a4;
-  --ink: #1d1d1f;
+  --panel: #fff;           /* left panel */
+  --panel-2: #ebebe9;      /* the strip along its bottom */
+  --tab-off: #878787;
+  --ink: #000;
   --ink-2: #55565c;
-  --rule: #b9b9b9;
-  --ontime: #2f9a55;
+  --rule: #757575;
+  --ontime: #1b7641;
   --delay: #f5c56c;
   --cancel: #d63a3a;
   --cleared: #2c8a40;
@@ -37,7 +38,7 @@ html, body {
   width: 1920px; height: 1080px;
   background: var(--frame);
   display: grid;
-  grid-template-rows: 146px 124px 1fr 78px;
+  grid-template-rows: 153px 150px 1fr 74px;   /* header, band, body, footer */
   overflow: hidden;
 }
 .ic { width: 1em; height: 1em; vertical-align: -0.12em; flex: none; fill: currentColor; }
@@ -74,8 +75,8 @@ html, body {
 .pill.delayed { background: var(--delay); color: var(--ink); border-color: #fff4dc; }
 
 /* ---------- body ---------- */
-.body { display: grid; grid-template-columns: 838px 1fr; min-height: 0; }
-.left { display: grid; grid-template-rows: 70px 1fr; min-height: 0; }
+.body { display: grid; grid-template-columns: 960px 1fr; min-height: 0; }
+.left { display: grid; grid-template-rows: 74px 1fr; min-height: 0; }
 /* The strip is tight: no padding letting the black stage through above or beside it, no gaps between the
    three tabs, and no rounded corners, so it meets the band above and the panel below edge to edge. */
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -90,7 +91,7 @@ html, body {
 .panel.out::after { opacity: 1; }
 .tab { transition: background-color .35s ease, color .35s ease; }
 
-.p-title { font-size: 46px; font-weight: 500; padding-bottom: 8px; border-bottom: 3px solid var(--rule); letter-spacing: -0.3px; }
+.p-title { font-size: 46px; font-weight: 500; padding-bottom: 8px; border-bottom: 4px solid var(--rule); letter-spacing: -0.3px; }
 .p-title sup { font-size: .5em; }
 
 /* flight tab */
@@ -103,7 +104,8 @@ html, body {
 .p-foot img { width: 108px; height: 108px; image-rendering: pixelated; }
 .p-foot b { display: block; font-size: 36px; font-weight: 600; }
 .p-foot span { font-size: 24px; color: var(--ink-2); }
-.arrival { margin-top: auto; font-size: 42px; display: flex; align-items: center; gap: 16px; }
+.arrival { margin: auto -36px -20px; height: 120px; padding: 0 36px; background: var(--panel-2);
+           font-size: 42px; display: flex; align-items: center; gap: 16px; }
 .arrival .ic { width: 44px; height: 44px; }
 .arrival b { font-weight: 500; margin-left: 20px; }
 

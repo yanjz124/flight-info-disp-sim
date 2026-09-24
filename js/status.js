@@ -150,5 +150,5 @@
   F.onChange((s) => { state = s; render(); });
   F.watchForUpdates();
   render();
-  setInterval(render, 30000);
+  setInterval(() => { if (F.rollOver(state)) F.save(state); render(); }, 30000);
 })(window.FIDS);

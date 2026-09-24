@@ -422,7 +422,10 @@
   };
 
   F.onChange((s) => { state = s; fillForm(); });   // e.g. arrow keys pressed on the display
-  setInterval(renderBoarding, 5000);                 // keep the auto-phase readout current
+  setInterval(() => {                                // keep the auto-phase readout current
+    if (F.rollOver(state)) { commit(); fillForm(); }
+    else renderBoarding();
+  }, 5000);
   F.watchForUpdates();
   fillForm();
 })(window.FIDS);

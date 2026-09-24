@@ -260,7 +260,9 @@
   }
 
   function render() {
-    const s = state, d = F.derive(s), c24 = s.display.clock24;
+    const s = state;
+    if (F.rollOver(s)) F.save(s);
+    const d = F.derive(s), c24 = s.display.clock24;
     checkQr(s.display.qrUrl);
     renderTop(s, d, c24);
     renderLeft(s, c24);

@@ -57,6 +57,7 @@ window.FIDS = window.FIDS || {};
         leadMin: 30,             // boarding time = departure - leadMin
         groupEveryMin: 4,
         closeMin: 15,            // boarding closes this long before departure
+        autoNext: true,          // once it has gone, show the next departure from the same gate
         countdownMin: 45,        // show "Boarding in N minutes" inside this window
       },
       amenities: {
@@ -259,6 +260,30 @@ window.FIDS = window.FIDS || {};
     s.next = { dest: '', flight: '', time: '', status: '' };
     s.flight.delayReason = '';
     s.flight.tail = '';
+  };
+
+  // Once a flight has gone, move the screen on to the next departure from its gate: the one already named
+  // in the footer, which FlightView put there. Returns true when it changed the flight, so a caller can
+  // save and redraw. Amenities and the name lists belong to the flight that left, so they go with it.
+  const ROLL_GRACE_MS = 10 * 60000;             // keep a departed flight up this long, as the feed does
+  F.rollOver = function (s) {
+    const f = s.flight, b = s.boarding, next = { ...s.next };
+    if (!b.autoNext || f.lock || s.feed.enabled) return false;   // the feed rolls its own gate over
+    if (!next.flight || !next.time) return false;
+    const depT = F.toEpoch(f.est || f.sched, f.utcOffsetMin), nextT = F.toEpoch(next.time, f.utcOffsetMin);
+    if (!isFinite(depT) || !isFinite(nextT) || nextT <= depT) return false;
+    if (Date.now() < depT + ROLL_GRACE_MS) return false;
+    F.resetFlightData(s);
+    const m = /^([A-Za-z]{2})\s*0*(\d+)$/.exec(next.flight.trim());
+    if (m) { f.airline = m[1].toUpperCase(); f.number = m[2]; }
+    f.destLabel = next.dest;
+    f.destCode = (next.dest.match(/\(([A-Z]{3})\)\s*$/) || [])[1] || '';
+    f.sched = next.time;
+    f.est = f.arr = '';
+    f.apiStatus = /delay/i.test(next.status || '') ? 'Delayed' : '';
+    b.phase = 'auto';                            // the new flight starts its own boarding over again
+    b.group = 0;
+    return true;
   };
 
   // Reload a long-running page when the site is updated (GitHub Pages caches files for ~10 min).

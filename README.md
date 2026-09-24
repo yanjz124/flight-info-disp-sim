@@ -40,6 +40,11 @@ No API keys and no accounts: everything is read from pages you open yourself, or
 Anything can still be typed in by hand in **Flight details** on the control page; tick **Freeze details** to stop an update
 from overwriting your edits.
 
+Ten minutes after a flight leaves, the screen moves on to the next departure from its gate: the one already in the footer,
+which FlightView put there. The amenities and the name lists belong to the flight that left, so they go with it, and
+boarding starts over. Turn it off under **Boarding**, or tick **Freeze details**. With the local feed running the feed does
+the rolling over instead, from the live departure board.
+
 ## United live data (one-click bookmark)
 
 The control page has a **Send to gate display** button. Drag it to your bookmarks bar once. After that the whole routine is:

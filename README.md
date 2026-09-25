@@ -6,11 +6,17 @@ A static web app that looks like an airline boarding gate screen. It can pull li
 
 It has no backend, so it runs on GitHub Pages.
 
-- `index.html`: the config and control page, so the site's own address opens it. (`control.html`, where it used to
-  live, redirects here.)
-- `display.html`: the display, a 1920x1080 layout scaled to fit any screen. Double-click or press `F` for fullscreen. `←` / `→` change the boarding group.
-- `status.html`: a flight status page for the same flight.
-- `delta/`: the same idea for a Delta gate screen &mdash; `delta/` is its control page, `delta/display.html` the display.
+One airline per folder, because the screens have almost nothing in common:
+
+- `index.html`: the landing page, which just picks an airline.
+- `united/`: the United control page, with `united/display.html` (1920x1080, scaled to fit; double-click or `F` for
+  fullscreen, `←` / `→` change the boarding group) and `united/status.html`.
+- `delta/`: the Delta control page and `delta/display.html`.
+- `css/control.css` is shared by the control pages; everything else lives inside its airline's folder.
+
+Links made before the move still work: `display.html`, `status.html` and `control.html` at the root redirect into
+`united/`, carrying any snapshot hash across, and a bookmarklet dragged when the control page was at the root is
+forwarded too.
 
 ## Running it
 
@@ -22,7 +28,7 @@ python -m http.server 8000
 ```
 
 **GitHub Pages:** push the repo, then go to Settings → Pages → Deploy from branch → `main` / root.
-Then open `https://<user>.github.io/<repo>/` — that address is the control page.
+Then open `https://<user>.github.io/<repo>/` and pick an airline.
 
 ## Where the data comes from
 

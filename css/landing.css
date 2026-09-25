@@ -1,0 +1,31 @@
+/* The landing page. Rides on control.css for the frame, and adds the airline picker. */
+.intro p { color: var(--muted); max-width: 70ch; }
+
+.picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+
+.airline {
+  display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 22px 22px 18px; text-decoration: none; color: var(--text);
+  border-top: 5px solid var(--line);
+}
+a.airline:hover { border-color: var(--blue); }
+a.airline:hover .go { text-decoration: underline; }
+
+.airline .code {
+  font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #fff;
+  background: var(--accent, #5d6a85); border-radius: 4px; padding: 3px 8px; justify-self: start;
+}
+.airline .name { font-size: 20px; font-weight: 600; }
+.airline .note { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.airline .go { font-size: 14px; font-weight: 600; color: var(--blue); margin-top: 4px; }
+
+/* Each airline's own blue, so the cards are told apart by more than the code. */
+.airline.ua { --accent: #1414d2; border-top-color: #1414d2; }
+.airline.dl { --accent: #0c132c; border-top-color: #c01933; }
+.airline.aa { --accent: #8a8d90; border-top-color: #8a8d90; }
+
+.airline.soon { opacity: .6; }
+.airline.soon .go { color: var(--muted); font-weight: 500; }
+
+.card .row a { font-size: 14px; }

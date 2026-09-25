@@ -11,7 +11,7 @@
         "order": 1,
         "text": "Display link",
         "type": "textinput",
-        "value": "https://yanjz124.github.io/flight-info-disp-sim/display.html"
+        "value": "https://yanjz124.github.io/flight-info-disp-sim/united/display.html"
       },
       "reload": {
         "order": 2,

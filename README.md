@@ -12,7 +12,9 @@ One airline per folder, because the screens have almost nothing in common:
 - `united/`: the United control page, with `united/display.html` (1920x1080, scaled to fit; double-click or `F` for
   fullscreen, `←` / `→` change the boarding group) and `united/status.html`.
 - `delta/`: the Delta control page and `delta/display.html`.
-- `css/control.css` is shared by the control pages; everything else lives inside its airline's folder.
+- The control pages are styled with [Primer](https://primer.style), GitHub's design system, loaded from a CDN.
+  `css/app.css` adds only what Primer has no component for: the field grid, the display preview, the boarding
+  group pad, the name-list editors and the airline picker. Everything else lives inside its airline's folder.
 
 Links made before the move still work: `display.html`, `status.html` and `control.html` at the root redirect into
 `united/`, carrying any snapshot hash across, and a bookmarklet dragged when the control page was at the root is

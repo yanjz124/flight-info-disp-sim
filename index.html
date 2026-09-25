@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gate Information Display Simulator</title>
-  <link rel="stylesheet" href="css/control.css">
-  <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@primer/css@21.5.1/dist/primer.css">
+  <link rel="stylesheet" href="css/app.css">
   <script>
     // This used to be the United control page, so anything addressed to it still is. Snapshot links go to
     // the United display; a bookmarklet dragged before the move hands its data over the same way.
@@ -16,56 +16,57 @@
     })();
   </script>
 </head>
-<body>
-  <header class="bar">
-    <h1>Gate Information Display Simulator</h1>
+<body class="color-bg-default">
+  <header class="Header">
+    <div class="Header-item Header-item--full f4 text-bold">Gate Information Display Simulator</div>
   </header>
 
-  <main>
-    <section class="card intro">
-      <p>Fan-made imitations of airline gate screens, built from photographs. Each one is its own screen, because
-        each airline's looks nothing like the others'. Pick one to set up a flight and open its display.</p>
-    </section>
+  <div class="container-lg p-responsive my-4">
+    <p class="color-fg-muted mb-4" style="max-width: 70ch">Fan-made imitations of airline gate screens, built by measuring
+      photographs. Each is its own screen, because each airline's looks nothing like the others'. Pick one to set up a
+      flight and open its display.</p>
 
-    <div class="picker">
-      <a class="airline ua" href="united/">
-        <span class="code">UA</span>
-        <span class="name">United Airlines</span>
-        <span class="note">Boarding groups, upgrade and standby lists, amenities, next departure. Live data from
-          united.com and FlightView.</span>
-        <span class="go">Open control page &rarr;</span>
+    <div class="picker mb-4">
+      <a class="Box Box-body airline ua" href="united/">
+        <span class="Label Label--accent mb-2 d-inline-block">UA</span>
+        <h2 class="h4 mb-1">United Airlines</h2>
+        <p class="color-fg-muted f6 mb-3">Boarding groups, upgrade and standby lists, amenities, next departure. Live data
+          from united.com and FlightView.</p>
+        <span class="go color-fg-accent f6 text-bold">Open control page &rarr;</span>
       </a>
 
-      <a class="airline dl" href="delta/">
-        <span class="code">DL</span>
-        <span class="name">Delta Air Lines</span>
-        <span class="note">One column of type on a dark blue field, as Delta's screens actually are. Live data from
-          FlightView.</span>
-        <span class="go">Open control page &rarr;</span>
+      <a class="Box Box-body airline dl" href="delta/">
+        <span class="Label Label--danger mb-2 d-inline-block">DL</span>
+        <h2 class="h4 mb-1">Delta Air Lines</h2>
+        <p class="color-fg-muted f6 mb-3">One column of type on a dark blue field, as Delta's screens actually are. Live
+          data from FlightView.</p>
+        <span class="go color-fg-accent f6 text-bold">Open control page &rarr;</span>
       </a>
 
-      <div class="airline aa soon">
-        <span class="code">AA</span>
-        <span class="name">American Airlines</span>
-        <span class="note">Not built yet. It needs photographs of a real gate screen first &mdash; the same way the
-          other two were measured.</span>
-        <span class="go">Planned</span>
+      <div class="Box Box-body airline soon">
+        <span class="Label mb-2 d-inline-block">AA</span>
+        <h2 class="h4 mb-1">American Airlines</h2>
+        <p class="color-fg-muted f6 mb-3">Not built yet. It needs photographs of a real gate screen first &mdash; the same
+          way the other two were measured.</p>
+        <span class="go color-fg-muted f6">Planned</span>
       </div>
     </div>
 
-    <section class="card">
-      <h2>Straight to a display</h2>
-      <p class="muted">Put one of these on the screen itself; the control page drives it from the same browser.</p>
-      <div class="row">
-        <a href="united/display.html">United display</a>
-        <a href="delta/display.html">Delta display</a>
-        <a href="united/status.html">United flight status page</a>
+    <div class="Box mb-4">
+      <div class="Box-header"><h2 class="Box-title">Straight to a display</h2></div>
+      <div class="Box-body">
+        <p class="color-fg-muted f6">Put one of these on the screen itself; the control page drives it from the same browser.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="united/display.html">United display</a>
+          <a href="delta/display.html">Delta display</a>
+          <a href="united/status.html">United flight status page</a>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <p class="disclaimer">Amateur fan project, nothing like as accurate as the real screens. Not affiliated with,
-      endorsed by or connected to any airline or alliance; not for real travel or airport use. Airline names and marks
-      are trademarks of their owners, used here only for this non-commercial project.</p>
-  </main>
+    <p class="color-fg-muted f6 text-center">Amateur fan project, nothing like as accurate as the real screens. Not
+      affiliated with, endorsed by or connected to any airline or alliance; not for real travel or airport use. Airline
+      names and marks are trademarks of their owners, used here only for this non-commercial project.</p>
+  </div>
 </body>
 </html>

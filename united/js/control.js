@@ -85,11 +85,11 @@
   function renderBoarding() {
     const d = F.derive(state), b = state.boarding;
     $('phaseBtns').innerHTML = Object.entries(F.PHASES).filter(([k]) => k !== 'boarding').map(([k, v]) =>
-      '<button data-phase="' + k + '" class="' + (b.phase === k ? 'current' : '') + '">' + v +
+      '<button type="button" class="btn BtnGroup-item' + (b.phase === k ? ' btn-primary' : '') + '" data-phase="' + k + '">' + v +
       (k === 'auto' && b.phase === 'auto' ? ' <small>(now: ' + F.PHASES[d.phase] + ')</small>' : '') + '</button>').join('');
     $('groupBtns').innerHTML = F.GROUPS.map((g, i) => {
-      const cls = d.phase === 'boarding' ? (i < d.group ? 'done' : i === d.group ? 'current' : '') : '';
-      return '<button data-g="' + i + '" class="' + cls + '">' + g + '</button>';
+      const cls = d.phase === 'boarding' ? (i < d.group ? 'done' : i === d.group ? 'btn-primary' : '') : '';
+      return '<button type="button" class="btn ' + cls + '" data-g="' + i + '">' + g + '</button>';
     }).join('');
   }
   $('phaseBtns').addEventListener('click', (e) => {
@@ -127,14 +127,16 @@
       el.innerHTML =
         '<table><thead><tr><th></th><th>Name</th><th>Checked in</th><th>Seat (= cleared)</th><th></th></tr></thead><tbody>' +
         list.map((p, i) => '<tr data-i="' + i + '"><td class="muted">' + (i + 1) + '</td>' +
-          '<td><input data-f="name" value="' + esc(p.name) + '"></td>' +
+          '<td><input class="form-control input-sm" data-f="name" value="' + esc(p.name) + '"></td>' +
           '<td><input type="checkbox" data-f="ci"' + (p.ci ? ' checked' : '') + '></td>' +
-          '<td><input data-f="seat" class="tiny" value="' + esc(p.seat) + '" placeholder="--"></td>' +
-          '<td class="act"><button data-a="up" title="Move up">&uarr;</button><button data-a="down" title="Move down">&darr;</button>' +
-          '<button data-a="del" title="Remove">&times;</button></td></tr>').join('') +
+          '<td><input class="form-control input-sm tiny" data-f="seat" value="' + esc(p.seat) + '" placeholder="--"></td>' +
+          '<td class="act"><button type="button" class="btn btn-sm" data-a="up" title="Move up">&uarr;</button>' +
+          '<button type="button" class="btn btn-sm" data-a="down" title="Move down">&darr;</button>' +
+          '<button type="button" class="btn btn-sm" data-a="del" title="Remove">&times;</button></td></tr>').join('') +
         '</tbody></table>' +
-        '<div class="row"><textarea rows="2" placeholder="Add names, one per line: SMITH, J.   (add a seat to mark cleared: SMITH, J. 3A)"></textarea>' +
-        '<button data-a="add">Add</button><button data-a="clear" class="danger">Clear list</button></div>';
+        '<div class="d-flex flex-wrap gap-2 mt-2"><textarea class="form-control input-sm flex-auto" rows="2" placeholder="Add names, one per line: SMITH, J.   (add a seat to mark cleared: SMITH, J. 3A)"></textarea>' +
+        '<button type="button" class="btn btn-sm" data-a="add">Add</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-a="clear">Clear list</button></div>';
     };
     el.addEventListener('input', (e) => {
       const tr = e.target.closest('tr[data-i]'), f = e.target.dataset.f;
@@ -253,7 +255,7 @@
     $('fvList').innerHTML = '<table><thead><tr><th>Flight</th><th>To</th><th>Gate</th><th>Departs</th><th>Status</th><th></th></tr></thead><tbody>' +
       rows.map((x) => '<tr class="' + ((x.upd || x.sch) < now ? 'past' : '') + '"><td>' + esc(x.al + x.no) + '</td><td>' + esc(x.toName || x.to) +
         ' (' + esc(x.to) + ')</td><td>' + esc(x.gate || '--') + '</td><td>' + F.fmtTime(x.date + 'T' + (x.upd || x.sch), state.display.clock24) +
-        '</td><td>' + esc(x.st || '') + '</td><td><button data-fv="' + x.i + '">Use</button></td></tr>').join('') +
+        '</td><td>' + esc(x.st || '') + '</td><td><button type="button" class="btn btn-sm" data-fv="' + x.i + '">Use</button></td></tr>').join('') +
       '</tbody></table>';
   }
   $('fvFilter').addEventListener('input', renderPicker);
@@ -295,7 +297,7 @@
       d.results.map((r, i) => '<tr><td>' + esc(r.al + r.no) + '</td><td>' + esc(r.from) + '</td><td>' +
         esc(r.toName || r.to) + ' (' + esc(r.to) + ')</td><td>' + esc(r.sched.slice(0, 10)) + ' ' +
         F.fmtTime(r.sched, state.display.clock24) + '</td><td>' + esc(r.gate || '--') + '</td><td>' +
-        esc(r.aircraft) + '</td><td>' + esc(r.st) + '</td><td><button data-lk="' + i + '">Use</button></td></tr>').join('') +
+        esc(r.aircraft) + '</td><td>' + esc(r.st) + '</td><td><button type="button" class="btn btn-sm" data-lk="' + i + '">Use</button></td></tr>').join('') +
       '</tbody></table>';
   }
   $('lkList').addEventListener('click', (e) => {

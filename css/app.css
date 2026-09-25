@@ -1,0 +1,56 @@
+/* Sits on top of Primer. Only the few things Primer has no component for: the field grid, the display
+   preview, the boarding-group pad, the name-list editors and the airline picker. Everything else -
+   boxes, buttons, inputs, headers - is Primer's own, and every colour here is a Primer token. */
+
+/* Primer v21 has no gap utilities. */
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 16px; }
+
+/* A form grid that reflows on its own; Primer's grid is 12-column and fixed. */
+.field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.field-grid .span2 { grid-column: span 2; }
+@media (max-width: 700px) { .field-grid .span2 { grid-column: auto; } }
+.field-grid label { font-size: 12px; font-weight: 600; color: var(--fgColor-muted, var(--color-fg-muted)); }
+
+/* status lines under a control: prose, not a banner, so not a Primer flash */
+.msg { font-size: 12px; color: var(--fgColor-muted, var(--color-fg-muted)); }
+.msg.err { color: var(--fgColor-danger, var(--color-danger-fg)); }
+
+/* the live 16:9 preview of the display */
+.frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; overflow: hidden; }
+.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* the boarding group pad: seven buttons that have to stay on one row */
+.groups { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.groups .btn { padding: 12px 4px; font-weight: 600; }
+.groups .btn.done { opacity: .45; }
+@media (max-width: 700px) { .groups { grid-template-columns: repeat(4, 1fr); } }
+
+/* scrolling result tables (departures, lookups) */
+.results { border: 1px solid var(--borderColor-default, var(--color-border-default)); border-radius: 6px; max-height: 320px; overflow: auto; }
+.results table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.results th, .results td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted)); }
+.results th { position: sticky; top: 0; background: var(--bgColor-muted, var(--color-canvas-subtle)); color: var(--fgColor-muted, var(--color-fg-muted)); font-weight: 600; }
+.results tr.past td { opacity: .45; }
+
+/* the upgrade / standby name editors */
+.list-editor table { width: 100%; border-collapse: collapse; }
+.list-editor th { text-align: left; font-size: 11px; font-weight: 600; color: var(--fgColor-muted, var(--color-fg-muted)); padding: 4px 6px; }
+.list-editor td { padding: 3px 6px; border-top: 1px solid var(--borderColor-muted, var(--color-border-muted)); }
+.list-editor td input:not([type]) { width: 100%; }
+.list-editor td input.tiny { width: 84px; }
+.list-editor .act { white-space: nowrap; text-align: right; }
+.list-editor .act .btn { padding: 2px 8px; margin-left: 2px; }
+
+/* the bookmarklet, which has to look draggable */
+.bm { cursor: grab; }
+
+/* the airline picker on the landing page */
+.picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.airline { display: block; text-decoration: none; color: inherit; border-top: 4px solid var(--borderColor-default, var(--color-border-default)); }
+a.airline:hover { border-color: var(--borderColor-accent-emphasis, var(--color-accent-emphasis)); text-decoration: none; }
+a.airline:hover .go { text-decoration: underline; }
+.airline.ua { border-top-color: #1414d2; }
+.airline.dl { border-top-color: #c01933; }
+.airline.soon { opacity: .6; }

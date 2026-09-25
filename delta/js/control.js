@@ -37,8 +37,8 @@
   function renderStatus() {
     const d = F.derive(state), auto = state.display.autoStatus;
     $('statusBtns').innerHTML = F.STATUSES.map((s) =>
-      '<button data-st="' + esc(s) + '" class="' + (!auto && state.flight.status === s ? 'current' : '') + '"' +
-      (auto ? ' disabled' : '') + '>' + esc(s) + '</button>').join('');
+      '<button type="button" class="btn BtnGroup-item' + (!auto && state.flight.status === s ? ' btn-primary' : '') +
+      '" data-st="' + esc(s) + '"' + (auto ? ' disabled' : '') + '>' + esc(s) + '</button>').join('');
     $('statusNow').textContent = auto
       ? 'The screen reads "' + d.status + '" right now, with ' + d.labels.join(' / ') + '.'
       : 'Held at "' + state.flight.status + '", with ' + d.labels.join(' / ') + '.';
@@ -72,7 +72,7 @@
       d.results.map((r, i) => '<tr><td>' + esc(r.al + r.no) + '</td><td>' + esc(r.from) + '</td><td>' + esc(r.to) +
         '</td><td>' + esc(r.sched.slice(0, 10)) + ' ' + F.fmtTime(r.sched, state.display.clock24) +
         '</td><td>' + esc(r.gate || '--') + '</td><td>' + esc(r.st) +
-        '</td><td><button data-lk="' + i + '">Use</button></td></tr>').join('') + '</tbody></table>';
+        '</td><td><button type="button" class="btn btn-sm" data-lk="' + i + '">Use</button></td></tr>').join('') + '</tbody></table>';
   }
   $('lkList').addEventListener('click', (e) => {
     const b = e.target.closest('[data-lk]');

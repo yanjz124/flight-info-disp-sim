@@ -10,6 +10,7 @@ It has no backend, so it runs on GitHub Pages.
   live, redirects here.)
 - `display.html`: the display, a 1920x1080 layout scaled to fit any screen. Double-click or press `F` for fullscreen. `←` / `→` change the boarding group.
 - `status.html`: a flight status page for the same flight.
+- `delta/`: the same idea for a Delta gate screen &mdash; `delta/` is its control page, `delta/display.html` the display.
 
 ## Running it
 
@@ -105,6 +106,25 @@ routes reach the pages. Only this site and `localhost` pages can change the setu
 **Send to the feed** also ticks **Show the feed on the display**. The display and status pages poll it, so a screen left
 running follows along on its own. Same caveats as the bookmark: personal use, breaks when either site changes.
 Passenger names never leave your machine.
+
+## Delta
+
+`delta/` is a second, separate screen: Delta's gate TV, which looks nothing like United's. One column of type on a
+dark blue field, and that is all it carries — no tabs, no amenities, no boarding zone, no gate number, no upgrade or
+standby list. Because of that the missing delta.com data source costs nothing: FlightView covers Delta for every field
+on the screen, so **Find a flight** and the departures bookmark work exactly as they do on the United page.
+
+It was built by measuring photographs rather than by eye. A straight-on shot whose lit area came out 1036x586 — 16:9
+to within a pixel — set every row position and type size; the widget is Delta's own vector, rotated 57 degrees so its
+long edge lies flat along the top edge; the field and ribbon colours were sampled from the same photograph.
+
+The time columns follow the status, which is how the real screens behave and was checked against ten photographed
+screens: `DEPARTS` when nothing has moved, `SCHEDULED / ACTUAL` when the status is itself about time (Delayed, Early,
+Boarding Ended), and `WAS / NOW` when the time moved but boarding is under way. The partner column is always present,
+reading `PARTNER` when empty and `PARTNERS` when filled.
+
+Delta's logos are trademarks of their owners, used here only for this non-commercial fan project. The typeface is
+Whitney, which is a paid licence, so this substitutes Source Sans 3.
 
 ## Wallpaper Engine
 

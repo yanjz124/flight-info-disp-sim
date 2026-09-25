@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delta Gate Display Control</title>
+  <link rel="stylesheet" href="../css/control.css">
+  <!-- Snapshot links belong to the display, not to this page. -->
+  <script>if (/^#s=/.test(location.hash)) location.replace('display.html' + location.hash);</script>
+</head>
+<body>
+  <header class="bar">
+    <h1>Delta Gate Display Control</h1>
+    <div class="bar-actions">
+      <button id="openDisplay" class="primary">Open display</button>
+      <button id="copyLink">Copy link for another device</button>
+      <button id="reset" class="danger">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card preview">
+      <div class="frame"><iframe id="preview" src="display.html" title="Display preview"></iframe></div>
+    </section>
+
+    <section class="card">
+      <h2>Flight <small>this is everything the screen shows</small></h2>
+      <div class="grid">
+        <label>Airline<input data-path="flight.airline" maxlength="3"></label>
+        <label>Flight #<input data-path="flight.number"></label>
+        <label class="span2">Destination, as written on screen<input data-path="flight.destLabel" placeholder="Syracuse, NY"></label>
+        <label>Origin code<input data-path="flight.originCode" maxlength="3"></label>
+        <label>Destination code<input data-path="flight.destCode" maxlength="3"></label>
+        <label>Scheduled<input type="datetime-local" data-path="flight.sched"></label>
+        <label>Actual / revised<input type="datetime-local" data-path="flight.actual"></label>
+        <label>Partners<input data-path="flight.partners" placeholder="AF 5868"></label>
+        <label>Time zone label<input data-path="flight.tzLabel" maxlength="4" placeholder="EDT"></label>
+        <label>Gate <small class="muted">(for the feed, not shown)</small><input data-path="flight.gate"></label>
+        <label>UTC offset (min)<input type="number" data-path="flight.utcOffsetMin"></label>
+      </div>
+      <p class="muted">Leave <b>Actual</b> empty and the screen reads <code>DEPARTS</code>. Fill it in and it becomes
+        <code>WAS / NOW</code> while the flight is still here, then <code>SCHEDULED / ACTUAL</code> once it has gone &mdash;
+        which is how the real screens switch.</p>
+    </section>
+
+    <section class="card">
+      <h2>Status</h2>
+      <div class="row">
+        <label class="inline"><input type="checkbox" data-path="display.autoStatus"> Work it out from the clock</label>
+        <span class="muted">At Gate &rarr; Boarding (35 min out) &rarr; Boarding Ended (10 min out) &rarr; Departed.</span>
+      </div>
+      <div class="seg" id="statusBtns"></div>
+      <div class="row"><span class="msg" id="statusNow"></span></div>
+    </section>
+
+    <section class="card">
+      <h2>Bottom ribbon</h2>
+      <div class="row"><input class="grow" data-path="next.text" placeholder="Next flight departing this gate is DL1253 to Asheville, NC"></div>
+      <div class="row">
+        <button id="nextFromLookup">Fill from the next departure at this gate</button>
+        <span class="msg" id="nextMsg"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Find a flight <small>FlightView covers Delta, so this works the same as on the United page</small></h2>
+      <ol class="steps">
+        <li>Drag this button to your bookmarks bar (one time): <a id="bookmarklet" class="bm" href="#">Send to gate display</a></li>
+        <li>Look one up below, or open an airport's <a id="fvLink" href="https://www.flightview.com/" target="_blank" rel="noopener">departures on FlightView</a> and click the bookmark there.</li>
+      </ol>
+      <div class="seg">
+        <label><input type="radio" name="lookupBy" value="number" checked> Date and flight number</label>
+        <label><input type="radio" name="lookupBy" value="route"> Date, from and to</label>
+      </div>
+      <div class="grid">
+        <label>Date<input type="date" id="lkDate"></label>
+        <label>Airline<input id="lkAirline" maxlength="3" placeholder="DL"></label>
+        <label data-lookup="number">Flight #<input id="lkNumber" placeholder="2597" inputmode="numeric"></label>
+        <label data-lookup="route">From<input id="lkFrom" maxlength="3" placeholder="BOS"></label>
+        <label data-lookup="route">To<input id="lkTo" maxlength="3" placeholder="YUL"></label>
+      </div>
+      <div class="row"><button id="lkBtn" class="primary">Look up</button><span id="lkMsg" class="msg"></span></div>
+      <div class="results" id="lkList" hidden></div>
+    </section>
+
+    <section class="card">
+      <h2>Display</h2>
+      <div class="row">
+        <label class="inline"><input type="checkbox" data-path="display.clock24"> 24-hour clock</label>
+      </div>
+      <p class="muted">The screen carries no gate number, no boarding zone and no upgrade or standby list &mdash; the real
+        ones don't either. Boarding groups appear on a separate screen, which this doesn't build yet.</p>
+    </section>
+
+    <p class="disclaimer">Amateur fan project. Not affiliated with, endorsed by or connected to Delta Air Lines or SkyTeam;
+      not for real travel or airport use. <a href="../">United version &rarr;</a></p>
+  </main>
+
+  <script src="js/state.js"></script>
+  <script src="js/flightview.js"></script>
+  <script src="js/control.js"></script>
+</body>
+</html>

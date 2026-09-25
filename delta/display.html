@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delta Gate Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/display.css">
+</head>
+<body>
+  <div id="stage">
+    <div class="clock"><b id="clock"></b><span id="tz"></span></div>
+
+    <img class="lockup" id="lockup" src="assets/delta-skyteam.png" alt="Delta, a SkyTeam member">
+
+    <!-- Delta's widget, its long edge laid flat along the top. Coordinates are the real artwork's,
+         rotated 57 degrees once and baked in, so nothing here can drift. -->
+    <svg class="widget" viewBox="0 0 417.56 378.61" aria-hidden="true">
+      <polygon points="40.54,0.00 417.56,0.00 235.24,118.38" fill="var(--widget-l)"></polygon>
+      <polygon points="0.00,6.95 120.65,192.78 199.17,141.80" fill="var(--widget-l)"></polygon>
+      <polygon points="235.24,118.38 417.56,0.00 264.15,344.39" fill="var(--widget-r)"></polygon>
+      <polygon points="199.17,141.80 120.65,192.78 241.31,378.61" fill="var(--widget-r)"></polygon>
+    </svg>
+
+    <div class="fno" id="fno"></div>
+    <div class="dest" id="dest"></div>
+
+    <div class="st-label">STATUS</div>
+    <div class="status" id="status"></div>
+
+    <div class="t-labels" id="tLabels"></div>
+    <div class="t-values" id="tValues"></div>
+
+    <div class="ribbon" id="ribbon"></div>
+  </div>
+  <div id="err" hidden></div>
+
+  <script src="js/state.js"></script>
+  <script src="js/display.js"></script>
+</body>
+</html>

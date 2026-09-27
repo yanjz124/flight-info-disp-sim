@@ -32,6 +32,19 @@
            '<p>Boarding ends 15 minutes before departure.</p>';
   }
 
+  // The real screens set the destination in one size and let long names run smaller rather than
+  // clip: "Bridgetown, Barbados" is twenty characters where "Miami, FL" is nine. Shrink to fit the
+  // room between the mark and the status chip, never past legibility.
+  function fitDest() {
+    const el = $('dest'), room = el.clientWidth;
+    let size = 130;
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > room && size > 72) {
+      size = Math.max(72, Math.floor(size * room / el.scrollWidth));
+      el.style.fontSize = size + 'px';
+    }
+  }
+
   function render() {
     const s = state, f = s.flight, d = F.derive(s), c24 = s.display.clock24;
     const tz = f.tzLabel ? ' <span style="font-size:.62em">' + esc(f.tzLabel) + '</span>' : '';
@@ -39,6 +52,7 @@
     set('gate', esc(f.gate));
     set('fno', 'Flight ' + esc((f.airline || 'AA') + ' ' + f.number));
     set('dest', esc(f.destLabel));
+    fitDest();
 
     // the chip is drawn in the chrome so its rake matches the header behind it; only the fill changes
     $('pill').setAttribute('fill', /delay/i.test(f.status) ? '#d97b26'

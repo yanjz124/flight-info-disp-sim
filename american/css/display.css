@@ -5,7 +5,8 @@
    Colours: the marks and type use American's own palette (AA Blue #0078D2, AA Red #C30019,
    AA Dark Gray #36495A); the screen's own fields are sampled from the photographs. */
 :root {
-  --font: "Open Sans", "Segoe UI", Arial, sans-serif;   /* stand-in for American's AmericanSans */
+  --font: "Fira Sans Condensed", "Segoe UI", Arial, sans-serif;  /* stand-in for AmericanSans, which
+     runs about 0.37 em per character - Open Sans was a quarter too wide and ran long names off */
   --aa-slate: #36495a;      /* AA Dark Gray: the type on the pale header */
   --panel: #dce6ef;
 }
@@ -25,10 +26,10 @@ html, body {
 /* every text layer sits above the chrome; each top is the measured cap top less the font's ascent gap */
 #stage > :not(.chrome) { position: absolute; }
 
-.sym { left: 41px; top: 52px; width: 156px; height: 114px; }
+.sym { left: 41px; top: 61px; width: 150px; height: 96px; }   /* 72:46, the artwork's own ratio */
 .fno { left: 229px; top: 24px; font-size: 67px; font-weight: 700; line-height: 1; color: var(--aa-slate); }
 .dest {
-  left: 229px; top: 87px; max-width: 1000px;
+  left: 229px; top: 87px; width: 975px;   /* up to the chip; display.js shrinks the type if a name is longer */
   font-size: 130px; font-weight: 700; line-height: 1; color: var(--aa-slate);
   white-space: nowrap; overflow: hidden;
 }
@@ -69,12 +70,7 @@ html, body {
 .panel .up-row.ok i { opacity: .85; }
 
 /* ---------- footer ---------- */
-.ow {
-  left: 41px; top: 978px; width: 74px; height: 74px;
-  border: 3px solid rgba(255, 255, 255, .8); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 600; letter-spacing: -.3px;
-}
+.ow { left: 41px; top: 974px; width: 84px; height: 84px; }   /* the oneworld roundel, centred in the band */
 .dur   { left: 190px; top: 992px; font-size: 56px; font-weight: 700; line-height: 1; }
 .clock { right: 44px; top: 992px; font-size: 56px; font-weight: 600; line-height: 1; }
 

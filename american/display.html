@@ -11,16 +11,35 @@
 </head>
 <body>
   <div id="stage">
-    <!-- the gate block sits on the blue field, showing through beside the header's wedge -->
+    <!-- The chrome is one SVG: the header wedge and the bottom band are raked and then turn through a
+         curve, which a clip-path polygon cannot do. The rake reads 1619/1663/1667 px across three
+         independently rectified photographs, so it is drawn at 1663. -->
+    <svg class="chrome" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="field" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#0b7ae0"/>
+          <stop offset="0.55" stop-color="#0078d2"/>
+          <stop offset="1" stop-color="#0069bb"/>
+        </linearGradient>
+        <linearGradient id="hdrFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="0.45" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#e4eef6"/>
+        </linearGradient>
+      </defs>
+      <rect width="1920" height="1080" fill="url(#field)"/>
+      <path d="M0 0 H1663 L1548 176 Q1522 218 1466 218 H0 Z" fill="url(#hdrFill)"/>
+      <path d="M0 953 H1180 Q1232 953 1262 913 Q1292 873 1344 873 H1920 V1080 H0 Z" fill="#0a3a91"/>
+      <path id="pill" d="M1256 100 H1530 L1504 192 H1256 Z" fill="#127c3a"/>
+    </svg>
+
+    <img class="sym" src="assets/aa-flight-symbol.svg" alt="American Airlines">
+    <div class="fno" id="fno"></div>
+    <div class="dest" id="dest"></div>
+    <div class="pill-text" id="pillText"></div>
+
     <div class="gate-l">Gate</div>
     <div class="gate" id="gate"></div>
-
-    <div class="hdr">
-      <img class="sym" src="assets/aa-flight-symbol.svg" alt="American Airlines">
-      <div class="fno" id="fno"></div>
-      <div class="dest" id="dest"></div>
-    </div>
-    <div class="pill" id="pill"></div>
 
     <div class="boards" id="boards"></div>
     <div class="t-label dep-l">Departs</div>
@@ -30,7 +49,6 @@
 
     <div class="panel" id="panel"></div>
 
-    <div class="ftr"></div>
     <div class="ow">oneworld</div>
     <div class="dur" id="dur"></div>
     <div class="clock" id="clock"></div>

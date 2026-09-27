@@ -40,11 +40,10 @@
     set('fno', 'Flight ' + esc((f.airline || 'AA') + ' ' + f.number));
     set('dest', esc(f.destLabel));
 
-    const pill = $('pill');
-    pill.textContent = (f.status || '').toUpperCase();
-    pill.className = 'pill' + (/delay/i.test(f.status) ? ' delayed' : /cancel/i.test(f.status) ? ' canceled' : '');
-    // the chip sits just left of the header's wedge, and its own rake matches it
-    pill.style.right = (1920 - 1530) + 'px';
+    // the chip is drawn in the chrome so its rake matches the header behind it; only the fill changes
+    $('pill').setAttribute('fill', /delay/i.test(f.status) ? '#d97b26'
+                                 : /cancel/i.test(f.status) ? '#c30019' : '#127c3a');
+    set('pillText', esc((f.status || '').toUpperCase()));
 
     set('boards', esc(d.line) + (d.group ? '<span class="chip">' + esc(d.group) + '</span>' : ''));
     set('departs', esc(F.fmtTime(f.sched, c24)) + tz);

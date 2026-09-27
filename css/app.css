@@ -53,4 +53,5 @@ a.airline:hover { border-color: var(--borderColor-accent-emphasis, var(--color-a
 a.airline:hover .go { text-decoration: underline; }
 .airline.ua { border-top-color: #1414d2; }
 .airline.dl { border-top-color: #c01933; }
+.airline.aa { border-top-color: #0078d2; }
 .airline.soon { opacity: .6; }

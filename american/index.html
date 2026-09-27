@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>American Gate Display Control</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@primer/css@21.5.1/dist/primer.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <script>if (/^#s=/.test(location.hash)) location.replace('display.html' + location.hash);</script>
+</head>
+<body class="color-bg-default">
+  <header class="Header">
+    <div class="Header-item"><a class="Header-link" href="../">&larr; All airlines</a></div>
+    <div class="Header-item Header-item--full f4 text-bold">American &middot; Gate Display Control</div>
+    <div class="Header-item mr-0 d-flex gap-2">
+      <button id="openDisplay" class="btn btn-sm btn-primary" type="button">Open display</button>
+      <button id="copyLink" class="btn btn-sm" type="button">Copy link for another device</button>
+      <button id="reset" class="btn btn-sm btn-danger" type="button">Reset</button>
+    </div>
+  </header>
+
+  <div class="container-lg p-responsive my-4">
+    <div class="Box mb-3">
+      <div class="Box-body p-2"><div class="frame"><iframe id="preview" src="display.html" title="Display preview"></iframe></div></div>
+    </div>
+
+    <div class="Box mb-3">
+      <div class="Box-header"><h2 class="Box-title">Flight</h2></div>
+      <div class="Box-body">
+        <div class="field-grid mb-3">
+          <label>Airline<input class="form-control input-sm input-block mt-1" data-path="flight.airline" maxlength="3"></label>
+          <label>Flight #<input class="form-control input-sm input-block mt-1" data-path="flight.number"></label>
+          <label>Gate<input class="form-control input-sm input-block mt-1" data-path="flight.gate"></label>
+          <label class="span2">Destination, as written on screen<input class="form-control input-sm input-block mt-1" data-path="flight.destLabel" placeholder="Miami, FL"></label>
+          <label>Origin code<input class="form-control input-sm input-block mt-1" data-path="flight.originCode" maxlength="3"></label>
+          <label>Destination code<input class="form-control input-sm input-block mt-1" data-path="flight.destCode" maxlength="3"></label>
+          <label>Departs<input class="form-control input-sm input-block mt-1" type="datetime-local" data-path="flight.sched"></label>
+          <label>Arrives<input class="form-control input-sm input-block mt-1" type="datetime-local" data-path="flight.arrives"></label>
+          <label>Boards at<input class="form-control input-sm input-block mt-1" type="datetime-local" data-path="flight.boardsAt"></label>
+          <label>Boarding group chip<input class="form-control input-sm input-block mt-1" data-path="flight.group" placeholder="First Class" list="aaGroups"></label>
+          <datalist id="aaGroups"><option>ConciergeKey</option><option>First Class</option><option>Group 1</option><option>Group 2</option><option>Group 3</option><option>Group 4</option><option>Group 5</option><option>Group 6</option><option>Group 7</option><option>Group 8</option><option>Group 9</option></datalist>
+          <label>Time zone suffix<input class="form-control input-sm input-block mt-1" data-path="flight.tzLabel" maxlength="4" placeholder="EDT"></label>
+          <label>UTC offset (min)<input class="form-control input-sm input-block mt-1" type="number" data-path="flight.utcOffsetMin"></label>
+        </div>
+        <div class="d-flex flex-wrap flex-items-center gap-3 mb-2">
+          <div class="form-checkbox mt-0 mb-0"><label><input type="checkbox" data-path="flight.arrivesChanged"> Arrival moved (reads &ldquo;Now arrives&rdquo;)</label></div>
+          <span class="msg" id="durMsg"></span>
+        </div>
+        <p class="color-fg-muted f6 mb-0">The footer works the flight duration out from the two times, as the real screens do.</p>
+      </div>
+    </div>
+
+    <div class="Box mb-3">
+      <div class="Box-header"><h2 class="Box-title">Status and boarding</h2></div>
+      <div class="Box-body">
+        <div class="BtnGroup mb-3" id="statusBtns"></div>
+        <div class="form-checkbox mt-0 mb-2">
+          <label><input type="checkbox" data-path="display.autoBoarding"> Work the boarding line out from the clock</label>
+          <span class="note">Boards at &rarr; Boards in N minutes (30 min out) &rarr; Boarding shortly &rarr; Boarding, with the group chip.</span>
+        </div>
+        <div><span class="msg" id="boardMsg"></span></div>
+      </div>
+    </div>
+
+    <div class="Box mb-3">
+      <div class="Box-header"><h2 class="Box-title">Right-hand panel</h2></div>
+      <div class="Box-body">
+        <div class="BtnGroup mb-3" id="panelBtns"></div>
+        <div id="upgradeFields">
+          <div class="field-grid mb-2">
+            <label>Cabin<input class="form-control input-sm input-block mt-1" data-path="panel.upgradeCabin" placeholder="First"></label>
+            <label>How many have cleared<input class="form-control input-sm input-block mt-1" type="number" min="0" data-path="panel.cleared"></label>
+          </div>
+          <label class="f6 color-fg-muted d-block">Names, one per line &mdash; surname and initial, as the screens show them
+            <textarea class="form-control input-sm input-block mt-1 text-mono" id="upNames" rows="6"></textarea>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="Box mb-3">
+      <div class="Box-header"><h2 class="Box-title">Find a flight <span class="color-fg-muted text-normal f6 ml-1">FlightView covers American too</span></h2></div>
+      <div class="Box-body">
+        <ol class="mb-3 pl-4">
+          <li class="mb-2">Drag this button to your bookmarks bar (one time):
+            <a id="bookmarklet" class="btn btn-sm btn-primary bm ml-1" href="#">Send to gate display</a></li>
+          <li>Look one up below, or open an airport&rsquo;s
+            <a id="fvLink" href="https://www.flightview.com/" target="_blank" rel="noopener">departures on FlightView</a>
+            and click the bookmark there.</li>
+        </ol>
+        <div class="d-flex flex-wrap gap-3 mb-2">
+          <div class="form-checkbox mt-0 mb-0"><label><input type="radio" name="lookupBy" value="number" checked> Date and flight number</label></div>
+          <div class="form-checkbox mt-0 mb-0"><label><input type="radio" name="lookupBy" value="route"> Date, from and to</label></div>
+        </div>
+        <div class="field-grid mb-2">
+          <label>Date<input class="form-control input-sm input-block mt-1" type="date" id="lkDate"></label>
+          <label>Airline<input class="form-control input-sm input-block mt-1" id="lkAirline" maxlength="3" placeholder="AA"></label>
+          <label data-lookup="number">Flight #<input class="form-control input-sm input-block mt-1" id="lkNumber" placeholder="585" inputmode="numeric"></label>
+          <label data-lookup="route">From<input class="form-control input-sm input-block mt-1" id="lkFrom" maxlength="3" placeholder="MIA"></label>
+          <label data-lookup="route">To<input class="form-control input-sm input-block mt-1" id="lkTo" maxlength="3" placeholder="BGI"></label>
+        </div>
+        <div class="d-flex flex-wrap flex-items-center gap-2 mb-2">
+          <button id="lkBtn" class="btn btn-sm btn-primary" type="button">Look up</button>
+          <span id="lkMsg" class="msg"></span>
+        </div>
+        <div class="results" id="lkList" hidden></div>
+      </div>
+    </div>
+
+    <div class="Box mb-3">
+      <div class="Box-header"><h2 class="Box-title">Display</h2></div>
+      <div class="Box-body">
+        <div class="form-checkbox mt-0 mb-0"><label><input type="checkbox" data-path="display.clock24"> 24-hour clock</label></div>
+      </div>
+    </div>
+
+    <p class="color-fg-muted f6 text-center">Amateur fan project. Not affiliated with, endorsed by or connected to American
+      Airlines or oneworld; not for real travel or airport use.
+      <a href="../united/">United</a> &middot; <a href="../delta/">Delta</a></p>
+  </div>
+
+  <script src="js/state.js"></script>
+  <script src="js/flightview.js"></script>
+  <script src="js/control.js"></script>
+</body>
+</html>

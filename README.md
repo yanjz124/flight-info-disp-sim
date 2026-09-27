@@ -12,6 +12,7 @@ One airline per folder, because the screens have almost nothing in common:
 - `united/`: the United control page, with `united/display.html` (1920x1080, scaled to fit; double-click or `F` for
   fullscreen, `←` / `→` change the boarding group) and `united/status.html`.
 - `delta/`: the Delta control page and `delta/display.html`.
+- `american/`: the American control page and `american/display.html`.
 - The control pages are styled with [Primer](https://primer.style), GitHub's design system, loaded from a CDN.
   `css/app.css` adds only what Primer has no component for: the field grid, the display preview, the boarding
   group pad, the name-list editors and the airline picker. Everything else lives inside its airline's folder.
@@ -133,6 +134,23 @@ reading `PARTNER` when empty and `PARTNERS` when filled.
 
 Delta's logos are trademarks of their owners, used here only for this non-commercial fan project. The typeface is
 Whitney, which is a paid licence, so this substitutes Source Sans 3.
+
+## American
+
+`american/` is the third screen. A white header carrying the flight symbol, the flight number, the destination, a status
+chip and the gate, over a blue field with the boarding line and the two times, a pale panel on the right holding either
+the standard boarding notice or the upgrade list, and a deeper band along the bottom with the flight duration and the
+clock. The header and that bottom band are both raked on the right, which is the shape the real screens use.
+
+Measured the same way as Delta: a straight-on photograph whose lit area came out 703x391 - 16:9 to within a pixel - set
+every row and type size. The flight symbol is American's own vector; the file published on Wikipedia references gradients
+it does not contain, so its four facets take the brand flats instead, AA Blue #0078D2 over AA Red #C30019. The type is
+AmericanSans, which is not licensable, so this substitutes Open Sans. The oneworld roundel in the footer is a plain
+stand-in, not their artwork.
+
+The boarding line follows the clock the way the screens do, and was checked against every phase in the photographs:
+`Boards at 6:15 AM`, then `Boards in N minutes` from half an hour out, `Boarding shortly`, and `Boarding` with the group
+in a chip beside it. The footer works the duration out from the two times.
 
 ## Wallpaper Engine
 

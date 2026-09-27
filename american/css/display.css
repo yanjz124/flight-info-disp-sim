@@ -1,0 +1,114 @@
+/* American gate display, 1920x1080. Measured off a straight-on photograph whose lit area came out
+   703x391 - 16:9 to within a pixel - so its proportions scale straight onto 1920x1080.
+   Colours: the marks and type use American's own palette (AA Blue #0078D2, AA Red #C30019,
+   AA Dark Gray #36495A); the screen's own fields are sampled from the photographs. */
+:root {
+  --font: "Open Sans", "Segoe UI", Arial, sans-serif;   /* stand-in for American's AmericanSans */
+  --aa-blue: #0078d2;
+  --aa-red: #c30019;
+  --aa-slate: #36495a;      /* AA Dark Gray: the type on the pale header */
+  --header-a: #ffffff;      /* header runs white to a pale blue */
+  --header-b: #e4eef6;
+  --body-a: #0b7ae0;        /* the blue field, a touch lighter top-left */
+  --body-b: #0078d2;
+  --footer: #0a3a91;        /* the deeper band along the bottom */
+  --panel: #dce6ef;         /* the pale notice / upgrade panel */
+  --pill-ontime: #127c3a;
+  --pill-delayed: #d97b26;
+  --pill-cancel: #c30019;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #000; overflow: hidden;
+  font-family: var(--font); color: #fff;
+}
+
+#stage {
+  position: absolute; top: 50%; left: 50%;
+  width: 1920px; height: 1080px; overflow: hidden;
+  background: linear-gradient(135deg, var(--body-a) 0%, var(--body-b) 55%, #0069bb 100%);
+}
+
+/* ---------- header: white band, with the blue gate wedge cutting in on the right ---------- */
+.hdr {
+  position: absolute; left: 0; top: 0; right: 0; height: 218px;
+  background: linear-gradient(100deg, var(--header-a) 0%, var(--header-a) 45%, var(--header-b) 100%);
+  /* the wedge: the white stops short on the right, on a slant */
+  clip-path: polygon(0 0, 1652px 0, 1510px 100%, 0 100%);
+}
+.sym { position: absolute; left: 41px; top: 54px; width: 150px; height: 110px; }
+.fno { position: absolute; left: 229px; top: 12px; font-size: 67px; font-weight: 700; color: var(--aa-slate); }
+.dest {
+  position: absolute; left: 229px; top: 62px; right: 700px;
+  font-size: 130px; font-weight: 700; color: var(--aa-slate);
+  white-space: nowrap; overflow: hidden;
+}
+
+/* the status chip, with its right edge raked like the wedge behind it */
+.pill {
+  position: absolute; top: 100px; height: 92px;
+  display: flex; align-items: center; padding: 0 34px 0 30px;
+  font-size: 52px; font-weight: 700; letter-spacing: 1px; color: #fff;
+  background: var(--pill-ontime);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%);
+}
+.pill.delayed { background: var(--pill-delayed); }
+.pill.canceled { background: var(--pill-cancel); }
+
+/* the gate block sits on the blue showing through beside the header */
+.gate-l { position: absolute; right: 142px; top: 30px; font-size: 36px; font-weight: 600; }
+.gate { position: absolute; right: 44px; top: 58px; font-size: 138px; font-weight: 700; line-height: 1; text-align: right; }
+
+/* ---------- body ---------- */
+.boards { position: absolute; left: 56px; top: 258px; font-size: 91px; font-weight: 600; display: flex; align-items: center; gap: 28px; }
+.boards .chip {
+  background: #fff; color: var(--aa-slate); font-size: 62px; font-weight: 600;
+  padding: 6px 26px; border-radius: 4px;
+}
+.t-label { position: absolute; left: 56px; font-size: 36px; font-weight: 600; }
+.t-value { position: absolute; left: 56px; font-size: 78px; font-weight: 600; }
+.dep-l { top: 455px; }
+.dep-v { top: 505px; }
+.arr-l { top: 679px; }
+.arr-v { top: 729px; }
+
+/* ---------- the pale panel on the right ---------- */
+.panel {
+  position: absolute; left: 1235px; top: 273px; width: 641px; height: 597px;
+  background: var(--panel); color: var(--aa-slate);
+  padding: 40px 44px; font-size: 44px; line-height: 1.32; font-weight: 600;
+}
+.panel p + p { margin-top: 40px; }
+
+.panel.upgrades { padding: 26px 28px; font-size: 30px; }
+.panel .up-title { font-size: 28px; font-weight: 700; opacity: .75; }
+.panel .up-cabin { font-size: 24px; font-weight: 700; letter-spacing: 1px; opacity: .6; margin-bottom: 12px; }
+.panel .up-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; }
+.panel .up-row { display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 600; }
+.panel .up-row i { font-style: normal; font-size: 24px; opacity: .55; width: 28px; text-align: right; }
+.panel .up-row.ok { background: var(--pill-ontime); color: #fff; padding: 2px 8px; border-radius: 3px; }
+.panel .up-row.ok i { opacity: .8; }
+
+/* ---------- footer: deeper band, raked up on the right ---------- */
+.ftr {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 218px;
+  background: var(--footer);
+  clip-path: polygon(0 88px, 1245px 88px, 1400px 0, 100% 0, 100% 100%, 0 100%);
+}
+.ow {
+  position: absolute; left: 41px; bottom: 26px; width: 74px; height: 74px;
+  border: 3px solid rgba(255,255,255,.85); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; font-weight: 600; letter-spacing: -.3px;
+}
+.dur { position: absolute; left: 140px; bottom: 34px; font-size: 50px; font-weight: 700; }
+.clock { position: absolute; right: 44px; bottom: 34px; font-size: 50px; font-weight: 600; }
+
+#err {
+  position: absolute; left: 0; right: 0; top: 0;
+  background: #7a1020; color: #fff; font-size: 26px; padding: 10px 20px;
+}

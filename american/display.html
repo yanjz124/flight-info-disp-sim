@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>American Gate Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/display.css">
+</head>
+<body>
+  <div id="stage">
+    <!-- the gate block sits on the blue field, showing through beside the header's wedge -->
+    <div class="gate-l">Gate</div>
+    <div class="gate" id="gate"></div>
+
+    <div class="hdr">
+      <img class="sym" src="assets/aa-flight-symbol.svg" alt="American Airlines">
+      <div class="fno" id="fno"></div>
+      <div class="dest" id="dest"></div>
+    </div>
+    <div class="pill" id="pill"></div>
+
+    <div class="boards" id="boards"></div>
+    <div class="t-label dep-l">Departs</div>
+    <div class="t-value dep-v" id="departs"></div>
+    <div class="t-label arr-l" id="arrivesLabel">Arrives</div>
+    <div class="t-value arr-v" id="arrives"></div>
+
+    <div class="panel" id="panel"></div>
+
+    <div class="ftr"></div>
+    <div class="ow">oneworld</div>
+    <div class="dur" id="dur"></div>
+    <div class="clock" id="clock"></div>
+  </div>
+  <div id="err" hidden></div>
+
+  <script src="js/state.js"></script>
+  <script src="js/display.js"></script>
+</body>
+</html>

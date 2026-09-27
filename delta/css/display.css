@@ -1,7 +1,7 @@
 /* Delta gate display, 1920x1080. Every number below is measured off a straight-on photo of a real screen
    whose lit area came out 1036x586 - 16:9 to within a pixel - so its proportions map straight onto 1920x1080. */
 :root {
-  --font: "Source Sans 3", "Segoe UI", Arial, sans-serif;   /* stand-in for Delta's Whitney */
+  --font: "Fira Sans", "Segoe UI", Arial, sans-serif;   /* closest free match to Whitney, Delta's brand face */
   --field-l: #0e1134;      /* sampled left, then darkened a touch */
   --field-m: #0d1230;
   --field-r: #0c132c;      /* sampled right */
@@ -30,8 +30,8 @@ html, body {
 
 /* ---------- top corner: clock left, lockup and widget right ---------- */
 .clock { position: absolute; left: 41px; top: 0; display: flex; align-items: baseline; gap: 16px; }
-.clock b { font-size: 62px; font-weight: 700; }
-.clock span { font-size: 34px; font-weight: 700; letter-spacing: 1px; color: var(--ink-2); }
+.clock b { font-size: 58px; font-weight: 700; }
+.clock span { font-size: 32px; font-weight: 700; letter-spacing: 1px; color: var(--ink-2); }
 
 .lockup { position: absolute; top: 24px; right: 250px; height: 92px; }
 
@@ -39,20 +39,20 @@ html, body {
 .widget { position: absolute; top: 4px; right: 44px; width: 160px; height: 145px; }
 
 /* ---------- the flight ---------- */
-.fno { position: absolute; left: 62px; top: 133px; font-size: 96px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.fno { position: absolute; left: 62px; top: 133px; font-size: 90px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
 .dest {
   position: absolute; left: 62px; top: 224px; right: 62px;
-  font-size: 144px; font-weight: 700; line-height: 1.1;
+  font-size: 136px; font-weight: 700; line-height: 1.1;
   white-space: nowrap; overflow: hidden; text-overflow: clip;
 }
 
-.st-label { position: absolute; left: 56px; top: 472px; font-size: 62px; font-weight: 700; letter-spacing: 1px; }
-.status { position: absolute; left: 56px; top: 524px; right: 56px; font-size: 130px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.st-label { position: absolute; left: 56px; top: 472px; font-size: 58px; font-weight: 700; letter-spacing: 1px; }
+.status { position: absolute; left: 56px; top: 524px; right: 56px; font-size: 123px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
 
 /* ---------- the time columns ---------- */
 .t-labels, .t-values { position: absolute; left: 56px; right: 56px; display: grid; }
-.t-labels { top: 723px; font-size: 72px; font-weight: 700; letter-spacing: 1px; }
-.t-values { top: 781px; font-size: 136px; align-items: baseline; }
+.t-labels { top: 723px; font-size: 68px; font-weight: 700; letter-spacing: 1px; }
+.t-values { top: 781px; font-size: 128px; align-items: baseline; }
 .t-values span { font-weight: 700; }
 .t-values .partner { font-weight: 400; }       /* codeshares sit in a lighter weight */
 .two { grid-template-columns: 559px minmax(0, 1fr); }
@@ -62,10 +62,10 @@ html, body {
 .ribbon {
   position: absolute; left: 0; right: 0; bottom: 0; height: 122px;
   background: var(--ribbon); display: flex; align-items: center; padding: 0 56px;
-  font-size: 60px; font-weight: 400; white-space: nowrap; overflow: hidden;
+  font-size: 57px; font-weight: 400; white-space: nowrap; overflow: hidden;
 }
 
 #err {
   position: absolute; left: 0; right: 0; bottom: 0;
-  background: #7a1020; color: #fff; font-size: 26px; padding: 10px 20px;
+  background: #7a1020; color: #fff; font-size: 25px; padding: 10px 20px;
 }

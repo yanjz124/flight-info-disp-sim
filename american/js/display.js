@@ -33,13 +33,13 @@
   }
 
   // The real screens set the destination in one size and let long names run smaller rather than
-  // clip: "Bridgetown, Barbados" is twenty characters where "Miami, FL" is nine. Shrink to fit the
-  // room between the mark and the status chip, never past legibility.
+  // clip. 98px matches the photograph; anything too long for the room before the status chip
+  // steps down from there.
   function fitDest() {
     const el = $('dest'), room = el.clientWidth;
-    let size = 130;
+    let size = 98;
     el.style.fontSize = size + 'px';
-    while (el.scrollWidth > room && size > 72) {
+    while (el.scrollWidth > room && size > 60) {
       size = Math.max(72, Math.floor(size * room / el.scrollWidth));
       el.style.fontSize = size + 'px';
     }

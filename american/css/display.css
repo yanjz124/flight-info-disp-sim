@@ -5,8 +5,10 @@
    Colours: the marks and type use American's own palette (AA Blue #0078D2, AA Red #C30019,
    AA Dark Gray #36495A); the screen's own fields are sampled from the photographs. */
 :root {
-  --font: "Fira Sans Condensed", "Segoe UI", Arial, sans-serif;  /* stand-in for AmericanSans, which
-     runs about 0.37 em per character - Open Sans was a quarter too wide and ran long names off */
+  --font: "Red Hat Text", "Segoe UI", Arial, sans-serif;
+  /* AmericanSans (Joe Finocchiaro, 2013) is proprietary. Of 76 free families scored against the
+     destination line on a rectified photograph - matched on ascender height, then compared pixel for
+     pixel - Red Hat Text 600 fits best: x-height within 2.7% and set width within 1.3%. */
   --aa-slate: #36495a;      /* AA Dark Gray: the type on the pale header */
   --panel: #dce6ef;
 }
@@ -27,19 +29,21 @@ html, body {
 #stage > :not(.chrome) { position: absolute; }
 
 .sym { left: 41px; top: 61px; width: 150px; height: 96px; }   /* 72:46, the artwork's own ratio */
-.fno { left: 229px; top: 24px; font-size: 67px; font-weight: 700; line-height: 1; color: var(--aa-slate); }
+.fno { left: 229px; top: 24px; font-size: 60px; font-weight: 600; line-height: 1; color: var(--aa-slate); }
 .dest {
-  left: 229px; top: 87px; width: 975px;   /* up to the chip; display.js shrinks the type if a name is longer */
-  font-size: 130px; font-weight: 700; line-height: 1; color: var(--aa-slate);
+  left: 229px; top: 87px; width: 985px;   /* leaves the ~45px gap before the status chip that the photograph shows */
+  /* 98px puts the ascender at 73px, which is what the photograph measures; display.js shrinks
+     the type for any name too long to fit, so nothing can clip. */
+  font-size: 98px; font-weight: 600; line-height: 1; color: var(--aa-slate);
   white-space: nowrap; overflow: hidden;
 }
 
 /* the chip's own text; its shape is drawn in the chrome so the rake matches the header behind it */
-.pill-text { left: 1286px; top: 118px; font-size: 52px; font-weight: 700; letter-spacing: 1px; line-height: 1; }
+.pill-text { left: 1286px; top: 118px; font-size: 52px; font-weight: 600; letter-spacing: 1px; line-height: 1; }
 
 /* the gate block, right-aligned on the blue showing past the header */
 .gate-l { right: 62px; top: 34px; font-size: 36px; font-weight: 600; line-height: 1; }
-.gate   { right: 44px; top: 64px; font-size: 138px; font-weight: 700; line-height: 1; }
+.gate   { right: 44px; top: 64px; font-size: 138px; font-weight: 600; line-height: 1; }
 
 /* ---------- the blue field ---------- */
 .boards { left: 56px; top: 291px; font-size: 91px; font-weight: 600; line-height: 1; display: flex; align-items: center; gap: 26px; }

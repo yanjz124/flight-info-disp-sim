@@ -24,7 +24,7 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 "Figtree", "Segoe UI", Arial, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 "Instrument Sans", "Segoe UI", Arial, sans-serif; }
 .ic { width: 1.1em; height: 1.1em; fill: currentColor; vertical-align: -0.2em; flex: none; }
 
 .top { background: var(--navy); color: #fff; display: flex; align-items: center; gap: 18px; padding: 14px 24px; }
